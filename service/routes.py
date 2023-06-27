@@ -15,11 +15,11 @@ from . import app
 ######################################################################
 # GET INDEX
 ######################################################################
-@app.route("/")
+@app.route("/", methods=['GET'])
 def index():
     """ Root URL response """
     return (
-        "Reminder: return some useful information in json format about the service here",
+        "<p>Reminder: return some useful information in json format about the service here</p>",
         status.HTTP_200_OK,
     )
 
