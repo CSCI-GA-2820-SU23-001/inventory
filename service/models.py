@@ -53,7 +53,6 @@ class Inventory(db.Model):
         Creates a Inventory to the database
         """
         logger.info("Creating new inventory...")
-        self.id = None  # pylint: disable=invalid-name
         db.session.add(self)
         db.session.commit()
 
@@ -61,23 +60,25 @@ class Inventory(db.Model):
         """
         Updates a Inventory to the database
         """
-        logger.info("Saving %s", self.name)
+        logger.info("Updating inventory id=%s , condition=%s", self.id, self.condition)
+        if not self.id:
+            raise DataValidationError("Update called with empty ID field")
         db.session.commit()
 
     def delete(self):
         """ Removes a Inventory from the data store """
-        logger.info("Deleting %s", self.name)
+        logger.info("Deleting inventory id=%s , condition=%s", self.id, self.condition)
         db.session.delete(self)
         db.session.commit()
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
         return {"id": self.id,
-                "condition": self.condition,
+                "condition": self.condition.name,
                 "quantity": self.quantity,
                 "restock_level": self.restock_level}
 
-    def deserialize(self, data):
+    def deserialize(self, data:dict):
         """
         Deserializes a Inventory from a dictionary
 
@@ -85,16 +86,31 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.quantity = data.get("quantity")
-            self.restock_level = data.get("restock_level")
+            self.id = data["id"]
+            self.condition = getattr(Condition, data["condition"])
+            if isinstance(data["quantity"], int):
+                self.quantity = data["quantity"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for boolean [quantity]: "
+                    + str(type(data["quantity"]))
+                )
+            if isinstance(data["restock_level"], int):
+                self.restock_level = data["restock_level"]
+            else:
+                raise DataValidationError(
+                    "Invalid type for boolean [restock_level]: "
+                    + str(type(data["restock_level"]))
+                )
+        except AttributeError as error:
+            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Inventory: missing " + error.args[0]
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid Inventory: body of request contained bad or no data - "
-                "Error message: " + error
+                "Invalid Inventory: body of request contained bad or no data " + str(error)
             ) from error
         return self
 
@@ -114,11 +130,17 @@ class Inventory(db.Model):
         logger.info("Processing all Inventorys")
         return cls.query.all()
 
+    # @classmethod
+    # def find(cls, by_id):
+    #     """ Finds a Inventory by it's ID """
+    #     logger.info("Processing lookup for id %s ...", by_id)
+    #     return cls.query.get(by_id)
+
     @classmethod
-    def find(cls, by_id):
-        """ Finds a Inventory by it's ID """
-        logger.info("Processing lookup for id %s ...", by_id)
-        return cls.query.get(by_id)
+    def find(cls, by_id, by_condition):
+        """ Finds a Inventory by it's ID and condition """
+        logger.info("Processing lookup for id %s and condition %s ...", by_id, by_condition)
+        return cls.query.filter(cls.id == by_id, cls.condition == by_condition).first()
 
     @classmethod
     def find_by_name(cls, name):
