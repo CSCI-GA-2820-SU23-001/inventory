@@ -40,19 +40,19 @@ class Inventory(db.Model):
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
     condition = db.Column(db.Enum(Condition), server_default=(Condition.NEW.name), primary_key=True)
-    quantity = db.Column(db.Integer)
-    restock_level = db.Column(db.Integer)
+    quantity = db.Column(db.Integer, default=1)
+    restock_level = db.Column(db.Integer,default=1)
     last_updated_on = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 
     def __repr__(self):
-        return f"<Inventory {self.name} id=[{self.id}]>"
+        return f"<Inventory id=[{self.id}] condition=[{self.condition}]>"
 
     def create(self):
         """
         Creates a Inventory to the database
         """
-        logger.info("Creating %s", self.name)
+        logger.info("Creating new inventory...")
         self.id = None  # pylint: disable=invalid-name
         db.session.add(self)
         db.session.commit()
