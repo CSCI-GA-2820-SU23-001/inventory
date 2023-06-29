@@ -38,15 +38,14 @@ class Inventory(db.Model):
     app = None
 
     # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, primary_key=True)
     condition = db.Column(db.Enum(Condition), server_default=(Condition.NEW.name), primary_key=True)
     quantity = db.Column(db.Integer, default=1)
     restock_level = db.Column(db.Integer,default=1)
     last_updated_on = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
-
     def __repr__(self):
-        return f"<Inventory id=[{self.id}] condition=[{self.condition}]>"
+        return f"<Inventory product_id=[{self.product_id}] condition=[{self.condition}]>"
 
     def create(self):
         """
@@ -60,20 +59,20 @@ class Inventory(db.Model):
         """
         Updates a Inventory to the database
         """
-        logger.info("Updating inventory id=%s , condition=%s", self.id, self.condition)
-        if not self.id:
+        logger.info("Updating inventory product_id=%s,condition=%s",self.product_id,self.condition)
+        if not self.product_id:
             raise DataValidationError("Update called with empty ID field")
         db.session.commit()
 
     def delete(self):
         """ Removes a Inventory from the data store """
-        logger.info("Deleting inventory id=%s , condition=%s", self.id, self.condition)
+        logger.info("Deleting inventory product_id=%s,condition=%s",self.product_id,self.condition)
         db.session.delete(self)
         db.session.commit()
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
-        return {"id": self.id,
+        return {"product_id": self.product_id,
                 "condition": self.condition.name,
                 "quantity": self.quantity,
                 "restock_level": self.restock_level}
@@ -86,7 +85,7 @@ class Inventory(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.id = data["id"]
+            self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
@@ -126,28 +125,40 @@ class Inventory(db.Model):
 
     @classmethod
     def all(cls):
-        """ Returns all of the Inventorys in the database """
-        logger.info("Processing all Inventorys")
+        """ Returns all of the Inventories in the database """
+        logger.info("Processing all Inventories")
         return cls.query.all()
-
-    # @classmethod
-    # def find(cls, by_id):
-    #     """ Finds a Inventory by it's ID """
-    #     logger.info("Processing lookup for id %s ...", by_id)
-    #     return cls.query.get(by_id)
 
     @classmethod
     def find(cls, by_id, by_condition):
         """ Finds a Inventory by it's ID and condition """
-        logger.info("Processing lookup for id %s and condition %s ...", by_id, by_condition)
-        return cls.query.filter(cls.id == by_id, cls.condition == by_condition).first()
+        logger.info("Processing lookup for product_id %s and condition %s ...", by_id, by_condition)
+        return cls.query.filter(cls.product_id == by_id, cls.condition == by_condition).first()
 
     @classmethod
-    def find_by_name(cls, name):
-        """Returns all Inventorys with the given name
+    def find_or_404(cls, product_id: int, condition: Condition):
+        """Find an Inventory by it's product product_id and condition
 
-        Args:
-            name (string): the name of the Inventorys you want to match
+        :param product_id: the id of the Product to find
+        :type condition: Condition
+
+        :return: an instance with the Inventory, or 404_NOT_FOUND if not found
+        :rtype: Inventory
+
         """
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
+        logger.info("Processing lookup or 404 for product_id %s, condition %s", product_id, condition)
+        return cls.query.get_or_404((product_id, condition))
+
+    @classmethod
+    def find_by_condition(cls, condition: Condition) -> list:
+        """Returns all inventories by their condition
+
+        :param condition: values are ['NEW', 'OPEN_BOX', 'USED']
+        :type available: enum
+
+        :return: a collection of inventories that are available
+        :rtype: list
+
+        """
+        logger.info("Processing condition query for %s ...", condition.name)
+        return cls.query.filter(cls.condition == condition)

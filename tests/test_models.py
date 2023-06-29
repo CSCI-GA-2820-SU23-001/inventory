@@ -5,6 +5,7 @@ Test cases for Inventory Model
 import os
 import logging
 import unittest
+from werkzeug.exceptions import NotFound
 from tests.factories import InventoryFactory
 from service.models import Inventory, Condition, DataValidationError, db
 from service import app
@@ -46,21 +47,17 @@ class TestInventory(unittest.TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
-    def test_example_replace_this(self):
-        """ It should always be true """
-        self.assertTrue(True)
-
     def test_create_a_inventory(self):
         """It should Create a Inventory and assert that it exists"""
-        inventory = Inventory(id=1, condition= Condition.NEW, quantity=1, restock_level=3)
-        self.assertEqual(str(inventory), "<Inventory id=[1] condition=[Condition.NEW]>")
+        inventory = Inventory(product_id=1, condition= Condition.NEW, quantity=1, restock_level=3)
+        self.assertEqual(str(inventory), "<Inventory product_id=[1] condition=[Condition.NEW]>")
         self.assertTrue(inventory is not None)
-        self.assertTrue(inventory.id is not None)
+        self.assertTrue(inventory.product_id is not None)
         self.assertEqual(inventory.condition, Condition.NEW)
         self.assertEqual(inventory.quantity, 1)
         self.assertEqual(inventory.restock_level, 3)
 
-        inventory = Inventory(id=2, condition=Condition.OPEN_BOX, restock_level=5)
+        inventory = Inventory(product_id=2, condition=Condition.OPEN_BOX, restock_level=5)
         self.assertEqual(inventory.quantity, None)
         self.assertEqual(inventory.condition, Condition.OPEN_BOX)
 
@@ -68,12 +65,11 @@ class TestInventory(unittest.TestCase):
         """It should Create a inventory and add it to the database"""
         inventories = Inventory.all()
         self.assertEqual(inventories, [])
-        inventory = Inventory(id=1, condition=Condition.NEW, quantity=10, restock_level=4)
+        inventory = Inventory(product_id=1, condition=Condition.NEW, quantity=10, restock_level=4)
         self.assertTrue(inventory is not None)
-        self.assertTrue(inventory.id is not None)
+        self.assertTrue(inventory.product_id is not None)
         inventory.create()
-        # Assert that it was assigned an id and shows up in the database
-        self.assertIsNotNone(inventory.id)
+        self.assertIsNotNone(inventory.product_id)
         inventories = Inventory.all()
         self.assertEqual(len(inventories), 1)
 
@@ -82,39 +78,37 @@ class TestInventory(unittest.TestCase):
         inventory = InventoryFactory()
         logging.debug(inventory)
         inventory.create()
-        self.assertIsNotNone(inventory.id)
+        self.assertIsNotNone(inventory.product_id)
         # Fetch it back
-        found_inventory = Inventory.find(inventory.id, inventory.condition)
-        self.assertEqual(found_inventory.id, inventory.id)
+        found_inventory = Inventory.find(inventory.product_id, inventory.condition)
+        self.assertEqual(found_inventory.product_id, inventory.product_id)
         self.assertEqual(found_inventory.condition, inventory.condition)
 
     def test_update_a_inventory(self):
         """It should Update a Inventory"""
-        #inventory = Inventory(id=2, condition= Condition.NEW, quantity=1, restock_level=3)
         inventory = InventoryFactory()
         logging.debug(inventory)
         inventory.create()
         logging.debug(inventory)
-        self.assertIsNotNone(inventory.id)
-        
+        self.assertIsNotNone(inventory.product_id)
         # Change it an save it
         inventory.quantity = 13
-        original_id = inventory.id
+        original_id = inventory.product_id
         inventory.update()
-        self.assertEqual(inventory.id, original_id)
+        self.assertEqual(inventory.product_id, original_id)
         self.assertEqual(inventory.quantity, 13)
         # Fetch it back and make sure the id hasn't changed
         # but the data did change
         inventories = Inventory.all()
         self.assertEqual(len(inventories), 1)
-        self.assertEqual(inventories[0].id, original_id)
+        self.assertEqual(inventories[0].product_id, original_id)
         self.assertEqual(inventories[0].quantity, 13)
-    
+
     def test_update_no_id(self):
-        """It should not Update an inventory with no id"""
+        """It should not Update an inventory with no product_id"""
         inventory = InventoryFactory()
         logging.debug(inventory)
-        inventory.id = None
+        inventory.product_id = None
         self.assertRaises(DataValidationError, inventory.update)
 
     def test_delete_an_inventory(self):
@@ -122,7 +116,7 @@ class TestInventory(unittest.TestCase):
         inventory = InventoryFactory()
         inventory.create()
         self.assertEqual(len(Inventory.all()), 1)
-        # delete the pet and make sure it isn't in the database
+        # delete the inventory and make sure it isn't in the database
         inventory.delete()
         self.assertEqual(len(Inventory.all()), 0)
 
@@ -130,11 +124,11 @@ class TestInventory(unittest.TestCase):
         """It should List all inventories in the database"""
         inventories = Inventory.all()
         self.assertEqual(inventories, [])
-        # Create 5 Pets
+        # Create 5 inventories
         for _ in range(5):
             inventory = InventoryFactory()
             inventory.create()
-        # See if we get back 5 pets
+        # See if we get back 5 inventories
         inventories = Inventory.all()
         self.assertEqual(len(inventories), 5)
 
@@ -143,29 +137,29 @@ class TestInventory(unittest.TestCase):
         inventory = InventoryFactory()
         data = inventory.serialize()
         self.assertNotEqual(data, None)
-        self.assertIn("id", data)
-        self.assertEqual(data["id"], inventory.id)
+        self.assertIn("product_id", data)
+        self.assertEqual(data["product_id"], inventory.product_id)
         self.assertIn("condition", data)
         self.assertEqual(data["condition"], inventory.condition.name)
         self.assertIn("quantity", data)
         self.assertEqual(data["quantity"], inventory.quantity)
         self.assertIn("restock_level", data)
         self.assertEqual(data["restock_level"], inventory.restock_level)
-    
+
     def test_deserialize_an_inventory(self):
         """It should de-serialize a inventory"""
         data = InventoryFactory().serialize()
         inventory = Inventory()
         inventory.deserialize(data)
         self.assertNotEqual(inventory, None)
-        self.assertNotEqual(inventory.id, None)
+        self.assertNotEqual(inventory.product_id, None)
         self.assertEqual(inventory.condition.name, data["condition"])
         self.assertEqual(inventory.quantity, data["quantity"])
         self.assertEqual(inventory.restock_level, data["restock_level"])
-        
+
     def test_deserialize_missing_data(self):
         """It should not deserialize an Inventory with missing data"""
-        data = {"id": 1, "quantity": "2"}
+        data = {"product_id": 1, "quantity": "2"}
         inventory = Inventory()
         self.assertRaises(DataValidationError, inventory.deserialize, data)
 
@@ -174,7 +168,7 @@ class TestInventory(unittest.TestCase):
         data = "this is not a dictionary"
         inventory = Inventory()
         self.assertRaises(DataValidationError, inventory.deserialize, data)
-    
+
     def test_deserialize_bad_quantity(self):
         """It should not deserialize a bad quantity attribute"""
         test_inventory = InventoryFactory()
@@ -182,7 +176,7 @@ class TestInventory(unittest.TestCase):
         data["quantity"] = "true"
         inventory = Inventory()
         self.assertRaises(DataValidationError, inventory.deserialize, data)
-    
+
     def test_deserialize_bad_restock_level(self):
         """It should not deserialize a bad restock_level attribute"""
         test_inventory = InventoryFactory()
@@ -207,10 +201,39 @@ class TestInventory(unittest.TestCase):
         logging.debug(inventories)
         # make sure they got saved
         self.assertEqual(len(Inventory.all()), 5)
-        # find the 2nd pet in the list
-        inventory = Inventory.find(inventories[1].id, inventories[1].condition)
+        # find the 2nd inventory record in the list
+        inventory = Inventory.find(inventories[1].product_id, inventories[1].condition)
         self.assertIsNot(inventory, None)
-        self.assertEqual(inventory.id, inventories[1].id)
+        self.assertEqual(inventory.product_id, inventories[1].product_id)
         self.assertEqual(inventory.condition, inventories[1].condition)
         self.assertEqual(inventory.quantity, inventories[1].quantity)
         self.assertEqual(inventory.restock_level, inventories[1].restock_level)
+
+    def test_find_by_condition(self):
+        """It should Find Inventories by condition"""
+        inventories = InventoryFactory.create_batch(10)
+        for inventory in inventories:
+            inventory.create()
+        condition = inventories[0].condition
+        count = len([inventory for inventory in inventories if inventory.condition == condition])
+        found = Inventory.find_by_condition(condition)
+        self.assertEqual(found.count(), count)
+        for inventory in found:
+            self.assertEqual(inventory.condition, condition)
+
+    def test_find_or_404_found(self):
+        """It should Find or return 404 not found"""
+        inventories = InventoryFactory.create_batch(3)
+        for inventory in inventories:
+            inventory.create()
+
+        inventory = Inventory.find_or_404(inventories[1].product_id, inventories[1].condition)
+        self.assertIsNot(inventory, None)
+        self.assertEqual(inventory.product_id, inventories[1].product_id)
+        self.assertEqual(inventory.condition, inventories[1].condition)
+        self.assertEqual(inventory.quantity, inventories[1].quantity)
+        self.assertEqual(inventory.restock_level, inventories[1].restock_level)
+
+    def test_find_or_404_not_found(self):
+        """It should return 404 not found"""
+        self.assertRaises(NotFound, Inventory.find_or_404, 0, Condition.NEW)
