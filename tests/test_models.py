@@ -5,6 +5,7 @@ Test cases for Inventory Model
 import os
 import logging
 import unittest
+import datetime
 from werkzeug.exceptions import NotFound
 from tests.factories import InventoryFactory
 from service.models import Inventory, Condition, DataValidationError, db
@@ -73,6 +74,21 @@ class TestInventory(unittest.TestCase):
         inventories = Inventory.all()
         self.assertEqual(len(inventories), 1)
 
+    def test_add_a_inventory_default_quantity(self):
+        """It should Create a inventory with default quantity and restock_level and add it to the database"""
+        inventory = Inventory(product_id=2, condition=Condition.OPEN_BOX)
+        self.assertTrue(inventory is not None)
+        self.assertTrue(inventory.product_id is not None)
+        self.assertEqual(inventory.quantity, None)
+        self.assertEqual(inventory.restock_level, None)
+        inventory.create()
+        self.assertIsNotNone(inventory.product_id)
+        inventories = Inventory.all()
+        self.assertEqual(len(inventories), 1)
+        self.assertEqual(inventories[0].product_id, inventory.product_id)
+        self.assertEqual(inventories[0].quantity, 1)
+        self.assertEqual(inventories[0].restock_level, 1)
+
     def test_read_a_inventory(self):
         """It should Read a Inventory"""
         inventory = InventoryFactory()
@@ -111,6 +127,13 @@ class TestInventory(unittest.TestCase):
         inventory.product_id = None
         self.assertRaises(DataValidationError, inventory.update)
 
+    def test_update_no_condition(self):
+        """It should not Update an inventory with no condition"""
+        inventory = InventoryFactory()
+        logging.debug(inventory)
+        inventory.condition = None
+        self.assertRaises(DataValidationError, inventory.update)
+
     def test_delete_an_inventory(self):
         """It should Delete a inventory"""
         inventory = InventoryFactory()
@@ -135,6 +158,10 @@ class TestInventory(unittest.TestCase):
     def test_serialize_an_inventory(self):
         """It should serialize an Inventory"""
         inventory = InventoryFactory()
+        self.assertEqual(inventory.last_updated_on, None)
+        inventory.create()
+        self.assertIsNotNone(inventory.product_id)
+        self.assertNotEqual(inventory.last_updated_on, None)
         data = inventory.serialize()
         self.assertNotEqual(data, None)
         self.assertIn("product_id", data)
@@ -145,6 +172,8 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(data["quantity"], inventory.quantity)
         self.assertIn("restock_level", data)
         self.assertEqual(data["restock_level"], inventory.restock_level)
+        self.assertIn("last_updated_on", data)
+        self.assertAlmostEqual(data["last_updated_on"], inventory.last_updated_on, delta=datetime.timedelta(seconds=0))
 
     def test_deserialize_an_inventory(self):
         """It should de-serialize a inventory"""
@@ -156,6 +185,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory.condition.name, data["condition"])
         self.assertEqual(inventory.quantity, data["quantity"])
         self.assertEqual(inventory.restock_level, data["restock_level"])
+        self.assertEqual(inventory.last_updated_on, data["last_updated_on"])
 
     def test_deserialize_missing_data(self):
         """It should not deserialize an Inventory with missing data"""

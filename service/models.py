@@ -62,6 +62,8 @@ class Inventory(db.Model):
         logger.info("Updating inventory product_id=%s,condition=%s",self.product_id,self.condition)
         if not self.product_id:
             raise DataValidationError("Update called with empty ID field")
+        if not self.condition:
+            raise DataValidationError("Update called with empty Condition field")
         db.session.commit()
 
     def delete(self):
@@ -75,7 +77,8 @@ class Inventory(db.Model):
         return {"product_id": self.product_id,
                 "condition": self.condition.name,
                 "quantity": self.quantity,
-                "restock_level": self.restock_level}
+                "restock_level": self.restock_level,
+                "last_updated_on": self.last_updated_on}
 
     def deserialize(self, data:dict):
         """
@@ -87,18 +90,19 @@ class Inventory(db.Model):
         try:
             self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
+            self.last_updated_on = data["last_updated_on"]
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
                 raise DataValidationError(
-                    "Invalid type for boolean [quantity]: "
+                    "Invalid type for integer [quantity]: "
                     + str(type(data["quantity"]))
                 )
             if isinstance(data["restock_level"], int):
                 self.restock_level = data["restock_level"]
             else:
                 raise DataValidationError(
-                    "Invalid type for boolean [restock_level]: "
+                    "Invalid type for integer [restock_level]: "
                     + str(type(data["restock_level"]))
                 )
         except AttributeError as error:
