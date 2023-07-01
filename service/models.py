@@ -71,6 +71,9 @@ class Inventory(db.Model):
         logger.info("Deleting inventory product_id=%s,condition=%s",self.product_id,self.condition)
         db.session.delete(self)
         db.session.commit()
+"""
+adding column of last_updated_on in serialize and deserialize
+"""
 
     def serialize(self):
         """ Serializes a Inventory into a dictionary """
