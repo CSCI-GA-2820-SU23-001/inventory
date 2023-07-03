@@ -5,7 +5,6 @@ Utilities for Inventory API endpoints
 
 from flask import Flask, jsonify, request, url_for, make_response, abort
 from service.common import status  # HTTP Status Codes
-from service.models import Inventory
 
 # Import Flask application
 from . import app
