@@ -30,6 +30,9 @@ class Condition(Enum):
     OPEN_BOX = 2
     USED = 3
 
+    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
+    FINAL = 4
+
 class Inventory(db.Model):
     """
     Class that represents a Inventory
