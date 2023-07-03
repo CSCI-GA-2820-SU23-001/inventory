@@ -90,7 +90,6 @@ class Inventory(db.Model):
         try:
             self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
-            self.last_updated_on = data["last_updated_on"]
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
