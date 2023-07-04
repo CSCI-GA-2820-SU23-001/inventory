@@ -58,6 +58,5 @@ def create_inventory():
         status_code = status.HTTP_409_CONFLICT
         app.logger.info("Inventory for product with ID [%s] and condition [%s] already exists.")
 
-    location_url = url_for("create_inventory", product_id=inventory.product_id, condition=inventory.condition, _external=True)
-    return jsonify(message), status_code, {"Location": location_url}
+    return jsonify(message), status_code
 

@@ -66,10 +66,6 @@ class TestYourResourceServer(TestCase):
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        # Make sure location header is set
-        location = response.headers.get("Location", None)
-        self.assertIsNotNone(location)
-
         # Check the data is correct
         new_inventory_item = response.get_json()
         self.assertEqual(new_inventory_item["product_id"], test_inventory.product_id)
@@ -79,15 +75,11 @@ class TestYourResourceServer(TestCase):
 
 
     def test_create_inventory_conflict(self):
-        """It should Create a new Inventory item"""
+        """It should fail to Create a new Inventory item"""
         test_inventory = InventoryFactory()
         logging.debug("Test Inventory create conflict: %s", test_inventory.serialize())
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Make sure location header is set
-        location = response.headers.get("Location", None)
-        self.assertIsNotNone(location)
 
         # Check the data is correct
         new_inventory_item = response.get_json()
