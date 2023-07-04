@@ -1,5 +1,7 @@
 """
-The inventory service keeps track of how many of each product we have in our warehouse
+Inventory Service
+
+List, Create, Read, Update, and Delete products from the inventory database
 """
 
 from flask import Flask, jsonify, request, url_for, make_response, abort
@@ -8,8 +10,12 @@ from service.models import Inventory
 from service.models import Condition
 from sqlalchemy.exc import IntegrityError
 
+# Import utilities
+from service.utilities import check_content_type
+
 # Import Flask application
 from . import app
+
 
 
 ######################################################################
@@ -36,7 +42,7 @@ def create_inventory():
     This endpoint will create an Inventory listing based on the data in the body that is posted
     """
     app.logger.info("Request to create an inventory item")
-    # check_content_type("application/json")
+    check_content_type("application/json")
     inventory = Inventory()
     inventory.deserialize(request.get_json())
     message = ""
@@ -51,8 +57,7 @@ def create_inventory():
         status_code = status.HTTP_409_CONFLICT
         app.logger.info("Inventory for product with ID [%s] and condition [%s] already exists.")
 
-    location_url = url_for("create_inventory", product_id=inventory.product_id, condition=inventory.condition, _external=True)
-    return jsonify(message), status_code, {"Location": location_url}
+    return jsonify(message), status_code
 
 ######################################################################
 # CREATE A LIST OF ITEMS

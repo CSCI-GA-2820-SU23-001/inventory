@@ -7,6 +7,7 @@ import logging
 from enum import Enum
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError 
 
 logger = logging.getLogger("flask.app")
 
@@ -56,7 +57,13 @@ class Inventory(db.Model):
         """
         logger.info("Creating new inventory...")
         db.session.add(self)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # error, there already is a user using this bank address or other
+            # constraint failed
+            db.session.rollback()
+            raise
 
     def update(self):
         """
@@ -93,7 +100,6 @@ class Inventory(db.Model):
         try:
             self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
-            self.last_updated_on = data["last_updated_on"]
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
