@@ -16,7 +16,7 @@ from tests.factories import InventoryFactory  # HTTP Status Codes
 
 
 DATABASE_URI = os.getenv(
-    "DATABASE_URI", "postgresql://postgres:postgres@postgres:5432/postgres"
+    "DATABASE_URI", "postgresql://postgres:postgres@postgres:5432/testdb"
 )
 BASE_URL = "/inventory"
 
