@@ -14,6 +14,7 @@ from service.models import db
 from service.common import status  # HTTP Status Codes
 from service.models import Inventory
 from service.models import Condition
+from tests.factories import InventoryFactory
 BASE_URL = "/inventory"
 
 ######################################################################
@@ -37,6 +38,19 @@ class TestYourResourceServer(TestCase):
     def tearDown(self):
         """ This runs after each test """
 
+    def _create_product_id(self, count):
+            """Factory method to create pets in bulk"""
+            product_id = []
+            for _ in range(count):
+                test_product_id = InventoryFactory()
+                response = self.client.post(BASE_URL, json=test_product_id.serialize())
+                self.assertEqual(
+                    response.status_code, status.HTTP_201_CREATED, "Could not create test product_id"
+                )
+                new_product_id = response.get_json()
+                test_product_id.id = new_product_id["id"]
+                product_id.append(test_product_id)
+            return product_id
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -46,12 +60,11 @@ class TestYourResourceServer(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    def test_delete_inventory(self):
-        """It should Delete a Inventory"""
-        test_inventory = Inventory(product_id=1, condition=Condition.NEW.name, quantity=10, restock_level=1)
-        response = self.client.delete(f"{BASE_URL}/{test_inventory.product_id}")
+    def test_delete_product(self):
+        """Test deleting a product"""
+        test_product = self._create_products(1)[0]
+        response = self.client.delete(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(len(response.data), 0)
-        # Make sure it is deleted
-        response = self.client.get(f"{BASE_URL}/{test_inventory.product_id}")
+
+        response = self.client.get(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

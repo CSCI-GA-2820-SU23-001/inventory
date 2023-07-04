@@ -30,19 +30,13 @@ def index():
 
 # Place your REST API code here ...
 
-@app.route("/inventory/<int:id>", methods=["DELETE"])
-def delete_inventory(id):
-    app.logger.info("Request to delete inventory with ID %s", id)
-    inventory = Inventory.find(id)
-    if inventory:
-        condition = inventory.condition
-        if condition == Condition.NEW:
-            inventory.delete()
-            app.logger.info("Inventory with ID %s and condition %s deleted successfully.", id, condition)
-            return "", status.HTTP_204_NO_CONTENT
-        else:
-            app.logger.info("Cannot delete inventory with ID %s and condition %s.", id, condition)
-            return "Cannot delete inventory with the specified condition.", status.HTTP_403_FORBIDDEN
-    else:
-        app.logger.info("Inventory with ID %s not found.", id)
-        return "", status.HTTP_404_NOT_FOUND
+@app.route("/Inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
+def delete_recommendation(product_id, condition):
+    '''This endpoint will delete a product with the specified id and condition'''
+    app.logger.info("Request to delete a product with product_id %s and condition %s", product_id, condition)
+    product = Inventory.query.filter_by(product_id=product_id, condition=condition).first()
+    if product:
+        product.delete()
+        # db.session.commit()
+    app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
+    return "", status.HTTP_204_NO_CONTENT
