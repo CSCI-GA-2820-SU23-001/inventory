@@ -10,30 +10,44 @@ import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from service import app
-from service.models import db
-from service.common import status  # HTTP Status Codes
+from service.models import Condition, Inventory, db
+from service.common import status
+from tests.factories import InventoryFactory  # HTTP Status Codes
 
+
+DATABASE_URI = os.getenv(
+    "DATABASE_URI", "postgresql://postgres:postgres@postgres:5432/postgres"
+)
+BASE_URL = "/inventory"
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 class TestYourResourceServer(TestCase):
     """ REST API Server Tests """
-
     @classmethod
     def setUpClass(cls):
-        """ This runs once before the entire test suite """
+        """This runs once before the entire test suite"""
+        app.config["TESTING"] = True
+        app.config["DEBUG"] = False
+        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.logger.setLevel(logging.CRITICAL)
+        Inventory.init_db(app)
 
     @classmethod
     def tearDownClass(cls):
-        """ This runs once after the entire test suite """
+        """This runs once after the entire test suite"""
+        db.session.close()
 
     def setUp(self):
-        """ This runs before each test """
+        """This runs before each test"""
         self.client = app.test_client()
+        db.session.query(Inventory).delete()  # clean up the last tests
+        db.session.commit()
 
     def tearDown(self):
-        """ This runs after each test """
+        """This runs after each test"""
+        db.session.remove()
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -43,3 +57,103 @@ class TestYourResourceServer(TestCase):
         """ It should call the home page """
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_list_all_items(self):
+        """ It should list all of the items in the inventory """
+        # Test the list_all_items function in routes.py
+
+        # Call list_all_items before adding anything; the list should be empty
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 0)
+
+        # Add 50 inventory objects with random data into the DB
+        for number in range(50):
+            test_inventory = InventoryFactory()
+            response = self.client.post(BASE_URL, json = test_inventory.serialize())
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # end for
+
+        # All 50 entries have been added, make sure the size of the list is 50
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 50)
+    # end func test_list_all_items
+
+    def test_list_items_condition(self):
+        """ It should list items (based on input condition) in the inventory """
+        # Test the list_items_condition function in routes.py
+
+        # Call list_items_condition before adding anything; the list should be empty
+        # Pass in a proper string (NEW, USED, OPEN_BOX) to ensure we don't get an HTTP 400
+        response = self.client.get(BASE_URL + "/NEW")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 0)
+
+        # Pass in an unexpected value and make sure HTTP_400_BAD_REQUEST is returned
+        response = self.client.get(BASE_URL + "/FOO")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Add some hard-coded inventory objects
+        test_inventory = Inventory(product_id = 1, condition = Condition.NEW, quantity = 10, restock_level = 1)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 2, condition = Condition.NEW, quantity = 5, restock_level = 1)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 3, condition = Condition.NEW, quantity = 15, restock_level = 1)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 4, condition = Condition.OPEN_BOX, quantity = 30, restock_level = 12)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 5, condition = Condition.USED, quantity = 30, restock_level = 12)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 6, condition = Condition.USED, quantity = 300, restock_level = 12)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 7, condition = Condition.USED, quantity = 100, restock_level = 12)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 8, condition = Condition.USED, quantity = 15, restock_level = 5)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 9, condition = Condition.OPEN_BOX, quantity = 15, restock_level = 5)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 10, condition = Condition.USED, quantity = 150, restock_level = 5)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # All entries have been added, make sure there are:
+        # 3 new items
+        # 5 used items
+        # 2 opened items
+        response = self.client.get(BASE_URL + "/NEW")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 3)
+
+        response = self.client.get(BASE_URL + "/USED")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 5)
+
+        response = self.client.get(BASE_URL + "/OPEN_BOX")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+        self.assertEqual(len(ret_list), 2)
+    # end func test_list_all_items

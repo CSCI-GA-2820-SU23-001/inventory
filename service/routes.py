@@ -7,7 +7,6 @@ from service.common import status  # HTTP Status Codes
 from service.models import Inventory
 from service.models import Condition
 from sqlalchemy.exc import IntegrityError
-import json
 
 # Import Flask application
 from . import app
@@ -82,7 +81,7 @@ def build_inventory_list(_filter : bool, _condition : Condition):
                                 "last_updated_on" : str(entry.last_updated_on)
                             }
                         )
-            
+
             # Write the current entry's info to the log
             app.logger.info("------------------------------------------------------------------")
             app.logger.info("Index : %d", index_number)
@@ -111,7 +110,7 @@ def list_all_items():
     # for an explanation of the arguments being passed into it
     ret_list = build_inventory_list(False, Condition.FINAL)
     app.logger.info("There are %d items in the inventory", len(ret_list))
-    return json.dumps(ret_list), status.HTTP_200_OK
+    return jsonify(ret_list), status.HTTP_200_OK
 # end func list_all_items
 
 ######################################################################
@@ -121,9 +120,6 @@ def list_all_items():
 def list_items_condition(_condition : str):
 
     app.logger.info("Request to list inventory items under a specific condition: %s", _condition)
-    if not isinstance(_condition, str):
-        raise TypeError("Argument must be a string!")
-    
     my_cond = Condition.FINAL
     match _condition.upper():
         case "NEW":
@@ -140,5 +136,5 @@ def list_items_condition(_condition : str):
     # See build_inventory_list for an explanation of the arguments being passed into it
     ret_list = build_inventory_list(True, my_cond)
     app.logger.info("There are %d items in the inventory with condition enum %d", len(ret_list), my_cond)
-    return json.dumps(ret_list), status.HTTP_200_OK
+    return jsonify(ret_list), status.HTTP_200_OK
 # end func list_items_condition
