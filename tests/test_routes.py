@@ -49,6 +49,16 @@ class TestYourResourceServer(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+
+    def _create_product_id(self, count):
+            """Factory method to create products in bulk"""
+            test_product_id = InventoryFactory()
+            response = self.client.post(BASE_URL, json=test_product_id.serialize())
+            self.assertEqual(
+                response.status_code, status.HTTP_201_CREATED, "Could not create test product_id"
+            )
+            new_product_id = response.get_json()
+            return new_product_id
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -58,6 +68,20 @@ class TestYourResourceServer(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
+    def test_delete_product(self):
+        """Test deleting a product"""
+        test_product = self._create_product_id(1)
+        response = self.client.delete(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.get(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_delete_product_with_invalid_details(self):
+        """Test deleting a product"""
+        response = self.client.delete(f"{BASE_URL}/0/OPEN_BOX")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+    
     def test_list_all_items(self):
         """ It should list all of the items in the inventory """
         # Test the list_all_items function in routes.py

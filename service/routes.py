@@ -3,11 +3,9 @@ Inventory Service
 
 List, Create, Read, Update, and Delete products from the inventory database
 """
-
+from service.models import Inventory, Condition
 from flask import Flask, jsonify, request, url_for, make_response, abort
 from service.common import status  # HTTP Status Codes
-from service.models import Inventory
-from service.models import Condition
 from sqlalchemy.exc import IntegrityError
 
 # Import utilities
@@ -26,11 +24,24 @@ def index():
     """ Root URL response """
     return ("<p>The inventory service keeps track of how many of each product we have in our warehouse</p>",
             status.HTTP_200_OK)
-
+    
 
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
+
+######################################################################
+# DELETE A INVENTORY ITEM
+######################################################################
+@app.route("/inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
+def delete_inventory(product_id, condition):
+    '''This endpoint will delete a product with the specified id and condition'''
+    app.logger.info("Request to delete a product with product_id %s and condition %s", product_id, condition)
+    product = Inventory.find(by_id=product_id, by_condition =condition)
+    if product:
+        product.delete()
+        app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
+    return ("", status.HTTP_204_NO_CONTENT)
 
 ######################################################################
 # ADD A NEW INVENTORY ITEM
@@ -159,7 +170,6 @@ def list_all_items():
 ######################################################################
 @app.route("/inventory/<_condition>", methods=['GET'])
 def list_items_condition(_condition : str):
-
     app.logger.info("Request to list inventory items under a specific condition: %s", _condition)
     my_cond = Condition.FINAL
     match _condition.upper():
