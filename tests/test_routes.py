@@ -80,7 +80,7 @@ class TestYourResourceServer(TestCase):
     def test_delete_product_with_invalid_details(self):
         """Test deleting a product"""
         response = self.client.delete(f"{BASE_URL}/0/OPEN_BOX")
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
     
     def test_list_all_items(self):
         """ It should list all of the items in the inventory """

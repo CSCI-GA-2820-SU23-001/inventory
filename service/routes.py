@@ -42,10 +42,8 @@ def delete_inventory(product_id, condition):
     product = Inventory.query.filter_by(product_id=product_id, condition=condition).first()
     if product:
         product.delete()
-        # db.session.commit()
         app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
-        return ("", status.HTTP_204_NO_CONTENT)
-    return ("", status.HTTP_404_NOT_FOUND)
+    return ("", status.HTTP_204_NO_CONTENT)
 
 ######################################################################
 # ADD A NEW INVENTORY ITEM
