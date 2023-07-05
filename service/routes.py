@@ -6,8 +6,6 @@ List, Create, Read, Update, and Delete products from the inventory database
 from service.models import Inventory, Condition
 from flask import Flask, jsonify, request, url_for, make_response, abort
 from service.common import status  # HTTP Status Codes
-from service.models import Inventory
-from service.models import Condition
 from sqlalchemy.exc import IntegrityError
 
 # Import utilities
@@ -39,7 +37,7 @@ def index():
 def delete_inventory(product_id, condition):
     '''This endpoint will delete a product with the specified id and condition'''
     app.logger.info("Request to delete a product with product_id %s and condition %s", product_id, condition)
-    product = Inventory.query.filter_by(product_id=product_id, condition=condition).first()
+    product = Inventory.find(by_id=product_id, by_condition =condition)
     if product:
         product.delete()
         app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
