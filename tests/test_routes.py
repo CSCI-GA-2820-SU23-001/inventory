@@ -72,9 +72,14 @@ class TestYourResourceServer(TestCase):
         """Test deleting a product"""
         test_product = self._create_product_id(1)
         response = self.client.delete(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         response = self.client.get(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_delete_product_with_invalid_details(self):
+        """Test deleting a product"""
+        response = self.client.delete(f"{BASE_URL}/0/OPEN_BOX")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
     
     def test_list_all_items(self):

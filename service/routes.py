@@ -44,7 +44,7 @@ def delete_inventory(product_id, condition):
         product.delete()
         # db.session.commit()
         app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
-        return ("", status.HTTP_200_OK)
+        return ("", status.HTTP_204_NO_CONTENT)
     return ("", status.HTTP_404_NOT_FOUND)
 
 ######################################################################
