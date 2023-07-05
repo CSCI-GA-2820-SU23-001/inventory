@@ -6,7 +6,8 @@ List, Create, Read, Update, and Delete products from the inventory database
 
 from flask import Flask, jsonify, request, url_for, make_response, abort
 from service.common import status  # HTTP Status Codes
-from service.models import Inventory, Condition
+from service.models import Inventory
+from service.models import Condition
 from sqlalchemy.exc import IntegrityError
 
 # Import utilities
@@ -23,10 +24,8 @@ from . import app
 @app.route("/", methods=['GET'])
 def index():
     """ Root URL response """
-    return (
-        "<p>Reminder: return some useful information in json format about the service here</p>",
-        status.HTTP_200_OK,
-    )
+    return ("<p>The inventory service keeps track of how many of each product we have in our warehouse</p>",
+            status.HTTP_200_OK)
 
 
 ######################################################################
@@ -60,32 +59,3 @@ def create_inventory():
 
     return jsonify(message), status_code
 
-######################################################################
-# RETRIEVE AN INVENTORY
-######################################################################
-@app.route("/inventory/<int:product_id>/<condition>", methods=["GET"])
-def get_inventories(product_id, condition):
-    """
-    Retrieve a single inventory
-
-    This endpoint will return an Inventory based on the product id and condition
-    """
-    app.logger.info("Request for inventory with id: %s and condition %s", product_id, condition)
-    my_cond = Condition.FINAL
-    match condition.upper():
-        case "NEW":
-            my_cond = Condition.NEW
-        case "OPEN_BOX":
-            my_cond = Condition.OPEN_BOX
-        case "USED":
-            my_cond = Condition.USED
-        case _:
-            # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above?
-            return "Unknown argument " + condition + " passed into URL", status.HTTP_400_BAD_REQUEST
-    # end switch
-    inventory = Inventory.find(product_id, my_cond)
-    if not inventory:
-        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{product_id}' and condition '{condition}' was not found.")
-
-    app.logger.info("Returning inventory: %s, %s", inventory.product_id, inventory.condition)
-    return jsonify(inventory.serialize()), status.HTTP_200_OK
