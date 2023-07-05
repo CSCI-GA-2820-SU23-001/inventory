@@ -7,7 +7,7 @@ import logging
 from enum import Enum
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError 
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger("flask.app")
 
@@ -30,6 +30,9 @@ class Condition(Enum):
     NEW = 1
     OPEN_BOX = 2
     USED = 3
+
+    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
+    FINAL = 4
 
 class Inventory(db.Model):
     """
