@@ -74,11 +74,7 @@ class Inventory(db.Model):
             raise DataValidationError("Update called with empty ID field")
         if not self.condition:
             raise DataValidationError("Update called with empty Condition field")
-                
-        # Update the attributes
-        self.quantity = self.quantity
-        self.restock_level = self.restock_level
-                
+
         # Commit the changes
         db.session.commit()
 
