@@ -74,6 +74,8 @@ class Inventory(db.Model):
             raise DataValidationError("Update called with empty ID field")
         if not self.condition:
             raise DataValidationError("Update called with empty Condition field")
+
+        # Commit the changes
         db.session.commit()
 
     def delete(self):
