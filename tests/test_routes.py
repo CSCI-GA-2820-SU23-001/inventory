@@ -209,7 +209,7 @@ class TestYourResourceServer(TestCase):
 
     def test_get_inventory_not_found(self):
         """It should not Get a inventory thats not found"""
-        response = self.client.get(f"{BASE_URL}/0")
+        response = self.client.get(f"{BASE_URL}/0/NEW")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         data = response.get_json()
         logging.debug("Response data = %s", data)
