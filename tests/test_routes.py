@@ -51,17 +51,14 @@ class TestYourResourceServer(TestCase):
 
 
     def _create_product_id(self, count):
-            """Factory method to create pets in bulk"""
-            product_id = []
-            for _ in range(count):
-                test_product_id = InventoryFactory()
-                response = self.client.post(BASE_URL, json=test_product_id.serialize())
-                self.assertEqual(
-                    response.status_code, status.HTTP_201_CREATED, "Could not create test product_id"
-                )
-                new_product_id = response.get_json()
-                product_id.append(new_product_id)
-            return product_id
+            """Factory method to create products in bulk"""
+            test_product_id = InventoryFactory()
+            response = self.client.post(BASE_URL, json=test_product_id.serialize())
+            self.assertEqual(
+                response.status_code, status.HTTP_201_CREATED, "Could not create test product_id"
+            )
+            new_product_id = response.get_json()
+            return new_product_id
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -73,7 +70,7 @@ class TestYourResourceServer(TestCase):
 
     def test_delete_product(self):
         """Test deleting a product"""
-        test_product = self._create_product_id(1)[0]
+        test_product = self._create_product_id(1)
         response = self.client.delete(f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
