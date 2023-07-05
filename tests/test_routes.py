@@ -91,3 +91,56 @@ class TestYourResourceServer(TestCase):
         # Retry the same POST to trigger key conflict
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+
+    def test_update_normally(self):
+        """Update normally"""
+        test_inventory = InventoryFactory(condition=Condition.NEW)
+        response_create = self.client.post(BASE_URL, json=test_inventory.serialize())
+        update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW" 
+        update_quantity = test_inventory.quantity + 2
+        update_restock_level = test_inventory.restock_level + 1
+        response = self.client.put(update_url, json={"quantity": update_quantity, "restock_level": update_restock_level})
+        test_inventory_json = response.get_json()
+        self.assertEqual(int(test_inventory_json["quantity"]), update_quantity)
+        self.assertEqual(int(test_inventory_json["restock_level"]), update_restock_level)
+
+
+    def test_update_non_existing_item(self):
+        """Update a non-existing item, should report a 404 error"""
+        update_url = BASE_URL + "/1/NEW"
+        response = self.client.put(update_url, json={"quantity": 10, "restock_level": 5})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_update_negative_quantity(self):
+        """Update a negative quantity, should report a 400 error"""
+        test_inventory = InventoryFactory(condition=Condition.NEW)
+        response_create = self.client.post(BASE_URL, json=test_inventory.serialize())
+        update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW" 
+        update_quantity = -1
+        update_restock_level = test_inventory.restock_level + 1
+        response = self.client.put(update_url, json={"quantity": update_quantity, "restock_level": update_restock_level})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def test_update_negative_restock_level(self):
+        """Update a negative restock level, should report a 400 error"""
+        test_inventory = InventoryFactory(condition=Condition.NEW)
+        response_create = self.client.post(BASE_URL, json=test_inventory.serialize())
+        update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW" 
+        update_quantity = test_inventory.quantity + 2
+        update_restock_level = -2
+        response = self.client.put(update_url, json={"quantity": update_quantity, "restock_level": update_restock_level})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def test_update_using_non_condition_value(self):
+        """Update an inventory by specifying a string which is not a part of Condition class, should be handled by check_condition_type function and report a 400 error"""
+        test_inventory = InventoryFactory(condition=Condition.NEW)
+        response_create = self.client.post(BASE_URL, json=test_inventory.serialize())
+        update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/EEEE" 
+        update_quantity = test_inventory.quantity + 2
+        update_restock_level = test_inventory.restock_level + 1
+        response = self.client.put(update_url, json={"quantity": update_quantity, "restock_level": update_restock_level})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

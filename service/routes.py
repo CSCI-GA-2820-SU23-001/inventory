@@ -10,7 +10,7 @@ from service.models import Inventory
 from sqlalchemy.exc import IntegrityError
 
 # Import utilities
-from service.utilities import check_content_type
+from service.utilities import check_content_type, check_condition_type
 
 # Import Flask application
 from . import app
@@ -60,3 +60,40 @@ def create_inventory():
 
     return jsonify(message), status_code
 
+
+
+######################################################################
+# UPDATE AN INVENTORY ITEM
+######################################################################
+@app.route("/inventory/<int:product_id>/<string:condition>", methods=["PUT"])
+def update_inventory(product_id, condition):
+    """
+    Updates an inventory listing for the specified product and condition
+    This endpoint will update the inventory listing for the specified product and condition
+    based on the data in the body that is sent in the request
+    """
+    app.logger.info("Request to update inventory for product with ID [%s] and condition [%s]", product_id, condition)
+    check_content_type("application/json")
+    check_condition_type(condition)
+    inventory = Inventory.find(product_id, condition)
+    if inventory is None:
+        abort(status.HTTP_404_NOT_FOUND, f"Inventory not found for product with ID {product_id} and condition {condition}")
+
+    update_json = request.get_json()
+    quantity = update_json["quantity"]
+    restock_level = update_json["restock_level"]
+
+    if quantity < 0:
+        abort(status.HTTP_400_BAD_REQUEST, "Quantity to be updated must be higher or equal to 0.")
+    if restock_level < 0:
+        abort(status.HTTP_400_BAD_REQUEST, "Restock level to be updated must be higher or equal to 0.")
+    
+    message = ""
+    inventory.quantity = quantity
+    inventory.restock_level = restock_level
+    inventory.update()
+    message = inventory.serialize()
+    status_code = status.HTTP_200_OK
+    app.logger.info("Inventory for product with ID [%s] and condition [%s] updated.", inventory.product_id, inventory.condition)
+
+    return jsonify(message), status_code
