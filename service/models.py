@@ -7,7 +7,7 @@ import logging
 from enum import Enum
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError 
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger("flask.app")
 

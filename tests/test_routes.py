@@ -190,3 +190,27 @@ class TestYourResourceServer(TestCase):
         # Retry the same POST to trigger key conflict
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_get_inventory(self):
+        """It should Get a single inventory"""
+        # get the id of a inventory
+        test_inventory = InventoryFactory()
+        logging.debug("Test Inventory create successful: %s", test_inventory.serialize())
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(f"{BASE_URL}/{test_inventory.product_id}/{test_inventory.condition.name}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["product_id"], test_inventory.product_id)
+        self.assertEqual(data["condition"], test_inventory.condition.name)
+        self.assertEqual(data["quantity"], test_inventory.quantity)
+        self.assertEqual(data["restock_level"], test_inventory.restock_level)
+
+    def test_get_inventory_not_found(self):
+        """It should not Get a inventory thats not found"""
+        response = self.client.get(f"{BASE_URL}/0/NEW")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        logging.debug("Response data = %s", data)
+        self.assertIn("was not found", data["message"])
