@@ -287,3 +287,6 @@ class TestYourResourceServer(TestCase):
         logging.debug("Response data = %s", data)
         self.assertIn("was not found", data["message"])
 
+        response = self.client.get(f"{BASE_URL}/0/FINAL")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
