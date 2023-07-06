@@ -214,6 +214,17 @@ class TestYourResourceServer(TestCase):
         # Retry the same POST to trigger key conflict
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+    
+    def test_create_with_no_content_type(self):
+        """Specifying some raw string with no type for the post request, it should report a 415 error"""
+        response = self.client.post(BASE_URL, data="some raw string")
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_with_invalid_content_type(self):
+        """Specifying some other type for the post request, it should report a 415 error"""
+        data = "key1=value1&key2=value2"
+        response = self.client.post(BASE_URL, data=data, content_type='application/x-www-form-urlencoded')
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     def test_update_normally(self):
         """Update normally"""
