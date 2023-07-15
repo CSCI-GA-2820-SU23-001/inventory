@@ -3,7 +3,7 @@ Utilities for Inventory API endpoints
 
 """
 
-from flask import Flask, jsonify, request, url_for, make_response, abort
+from flask import request, abort
 from service.common import status  # HTTP Status Codes
 
 # Import Flask application
@@ -33,13 +33,14 @@ def check_content_type(content_type):
         f"Content-Type must be {content_type}",
     )
 
+
 def check_condition_type(condition_str):
     """Checks if the given string is a product condition"""
     try:
         condition = Condition[condition_str]
+
+        # This line was added to suppress a "make lint" error
+        return condition
     except KeyError:
         app.logger.error("Invalid Condition Type.")
-        abort(
-            status.HTTP_400_BAD_REQUEST,
-            "Invalid Condition Type."
-        )
+        abort(status.HTTP_400_BAD_REQUEST, "Invalid Condition Type.")
