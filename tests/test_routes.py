@@ -106,11 +106,10 @@ class TestYourResourceServer(TestCase):
         self.assertEqual(len(ret_list), 50)
     # end func test_list_all_items
 
-    def test_list_items_condition(self):
-        """ It should list items (based on input condition) in the inventory """
-        # Test the list_items_condition function in routes.py
+    def test_list_items_criteria_condition(self):
+        """ It should list items (based on input condition NEW, OPEN_BOX, USED) in the inventory """
 
-        # Call list_items_condition before adding anything; the list should be empty
+        # Call list_items_criteria before adding anything; the list should be empty
         # Pass in a proper string (NEW, USED, OPEN_BOX) to ensure we don't get an HTTP 400
         response = self.client.get(BASE_URL + "/NEW")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -180,7 +179,59 @@ class TestYourResourceServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ret_list = response.get_json()
         self.assertEqual(len(ret_list), 2)
-    # end func test_list_all_items
+    # end func test_list_items_criteria_condition
+
+    def test_list_items_criteria_restock(self):
+        """ It should list items we're running low on (based on restock level) in the inventory """
+
+        # Add some hard-coded inventory objects
+        test_inventory = Inventory(product_id = 1, condition = Condition.NEW, quantity = 10, restock_level = 11)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 2, condition = Condition.NEW, quantity = 50, restock_level = 60)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 3, condition = Condition.NEW, quantity = 5, restock_level = 1)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 4, condition = Condition.OPEN_BOX, quantity = 30, restock_level = 35)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 5, condition = Condition.USED, quantity = 20, restock_level = 20)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 6, condition = Condition.USED, quantity = 500, restock_level = 120)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 7, condition = Condition.USED, quantity = 100, restock_level = 120)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 8, condition = Condition.USED, quantity = 15, restock_level = 50)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 9, condition = Condition.OPEN_BOX, quantity = 88, restock_level = 95)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory = Inventory(product_id = 10, condition = Condition.USED, quantity = 150, restock_level = 150)
+        response = self.client.post(BASE_URL, json = test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(BASE_URL + "/RESTOCK")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ret_list = response.get_json()
+
+        # there are 6 entries from above where quantity < restock_level
+        self.assertEqual(len(ret_list), 6)
+    # end func test_list_items_criteria_restock
 
     def test_create_inventory_success(self):
         """It should Create a new Inventory item"""
