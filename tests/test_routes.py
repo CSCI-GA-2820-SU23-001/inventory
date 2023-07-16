@@ -436,3 +436,109 @@ class TestYourResourceServer(TestCase):
 
         response = self.client.get(f"{BASE_URL}/0/FINAL")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_enable_disable_update_action(self):
+        """Test the functionality of the enable/disable update action"""
+
+        # Add things to the DB
+        test_inventory_first = Inventory(
+            product_id=1, condition=Condition.NEW, quantity=100, restock_level=10
+        )
+        response = self.client.post(BASE_URL, json=test_inventory_first.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory_second = Inventory(
+            product_id=2, condition=Condition.OPEN_BOX, quantity=100, restock_level=10
+        )
+        response = self.client.post(BASE_URL, json=test_inventory_second.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Now disable updates for product ID 1
+        response = self.client.delete(
+            BASE_URL + "/" + str(test_inventory_first.product_id) + "/NEW/active"
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Try updating product ID 1
+        update_quantity = test_inventory_first.quantity + 2
+        update_restock_level = test_inventory_first.restock_level + 1
+        response = self.client.put(
+            BASE_URL + "/" + str(test_inventory_first.product_id) + "/NEW",
+            json={"quantity": update_quantity, "restock_level": update_restock_level},
+        )
+
+        # Failure
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # But product ID 2 can freely be updated as it is still enabled
+        update_quantity = test_inventory_second.quantity + 2
+        update_restock_level = test_inventory_second.restock_level + 1
+        response = self.client.put(
+            BASE_URL + "/" + str(test_inventory_second.product_id) + "/OPEN_BOX",
+            json={"quantity": update_quantity, "restock_level": update_restock_level},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Disabling product ID 1 should do nothing as it is still disabled
+        response = self.client.delete(
+            BASE_URL + "/" + str(test_inventory_first.product_id) + "/NEW/active"
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Similarly, enabling product ID 2 should do nothing as it is still enabled
+        response = self.client.put(
+            BASE_URL + "/" + str(test_inventory_second.product_id) + "/OPEN_BOX/active"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Enable product ID 1 back
+        response = self.client.put(
+            BASE_URL + "/" + str(test_inventory_first.product_id) + "/NEW/active"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Product ID 1 can now be updated
+        update_quantity = test_inventory_first.quantity + 2
+        update_restock_level = test_inventory_first.restock_level + 1
+        response = self.client.put(
+            BASE_URL + "/" + str(test_inventory_first.product_id) + "/NEW",
+            json={"quantity": update_quantity, "restock_level": update_restock_level},
+        )
+
+        # Success
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    # end func test_update_inventory_after_disable
+
+    def test_enable_disable_update_action_error_handler(self):
+        """Test the error handler of the enable/disable update action"""
+
+        # Add things to the DB
+        test_inventory_first = Inventory(
+            product_id=1, condition=Condition.NEW, quantity=100, restock_level=10
+        )
+        response = self.client.post(BASE_URL, json=test_inventory_first.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        test_inventory_second = Inventory(
+            product_id=2, condition=Condition.NEW, quantity=100, restock_level=10
+        )
+        response = self.client.post(BASE_URL, json=test_inventory_second.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Try disabling updates to product ID 3 (doesn't exist)
+        response = self.client.delete(
+            BASE_URL + "/3/NEW/active"
+        )
+
+        # Regardless, HTTP_204_NO_CONTENT is returned
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Try enabling updates to product ID 4 (doesn't exist)
+        response = self.client.put(
+            BASE_URL + "/4/USED/active"
+        )
+
+        # Error
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # end func test_enable_disable_update_action_error_handler

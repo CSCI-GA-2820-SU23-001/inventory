@@ -17,16 +17,32 @@ from . import app
 
 
 class filter_type(Enum):
-    # Enumeration of filter types
+    """ Enumeration of filter types """
 
-    CONDITION = 0
-    RESTOCK = 1
+    CONDITION = (0,)
+    RESTOCK = (1,)
 
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     NONE = 2
 
 
 # end enum filter_type
+
+
+class update_status_type(Enum):
+    """ Enumeration of update status types """
+
+    DISABLED = (0,)
+    ENABLED = (1,)
+
+    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
+    UNKNOWN = 2
+
+
+# end enum update_status_type
+
+# Global table where each tuple is a {(str Product ID, enum Condition), enum update_status_type} pair
+status_dict = {}
 
 
 ######################################################################
@@ -47,6 +63,96 @@ def index():
 
 
 ######################################################################
+# ENABLE UPDATES OF A PRODUCT ID
+######################################################################
+@app.route(
+    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["PUT"]
+)
+def enable_product_id(_product_id, _condition):
+    """ ENABLE UPDATES OF A PRODUCT ID """
+    app.logger.info(
+        "Request to enable updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    check_condition_type(_condition)
+    if (_product_id, Condition[_condition]) in status_dict:
+        status_dict[(_product_id, Condition[_condition])] = update_status_type.ENABLED
+
+        app.logger.info(
+            "Successfully enabled updates of product ID %s, condition %s",
+            _product_id,
+            _condition,
+        )
+
+        return (
+            jsonify(
+                "Successfully enabled updates of product ID "
+                + _product_id
+                + " with condition "
+                + _condition
+            ),
+            status.HTTP_200_OK,
+        )
+    # end if
+
+    app.logger.error(
+        "Tuple (%s, %s) does not exist in status_dict", _product_id, _condition
+    )
+    abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
+    # end if/else
+
+
+# end func enable_product_id
+
+
+######################################################################
+# DISABLE UPDATES OF A PRODUCT ID
+######################################################################
+@app.route(
+    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["DELETE"]
+)
+def disable_product_id(_product_id, _condition):
+    """ DISABLE UPDATES OF A PRODUCT ID """
+    app.logger.info(
+        "Request to disable updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    check_condition_type(_condition)
+    if (_product_id, Condition[_condition]) in status_dict:
+        status_dict[(_product_id, Condition[_condition])] = update_status_type.DISABLED
+
+        app.logger.info(
+            "Successfully disabled updates of product ID %s, condition %s",
+            _product_id,
+            _condition,
+        )
+
+        return (
+            jsonify(
+                "Successfully disabled updates of product ID "
+                + _product_id
+                + " with condition "
+                + _condition
+            ),
+            status.HTTP_204_NO_CONTENT,
+        )
+    # end if
+
+    app.logger.info(
+        "Tuple (%s, %s) does not exist in status_dict", _product_id, _condition
+    )
+    return jsonify("Invalid argument specified"), status.HTTP_204_NO_CONTENT
+    # end if/else
+
+
+# end func disable_product_id
+
+
+######################################################################
 # DELETE A INVENTORY ITEM
 ######################################################################
 @app.route("/inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
@@ -62,6 +168,14 @@ def delete_inventory(product_id, condition):
         product.delete()
         app.logger.info(
             "Product with product_id %s and condition %s deleted.",
+            product_id,
+            condition,
+        )
+
+        # Now delete the corresponding tuple from status_dict
+        status_dict.pop((str(product_id), Condition[condition]))
+        app.logger.info(
+            "Product_id %s, Condition %s removed from status_dict",
             product_id,
             condition,
         )
@@ -91,6 +205,17 @@ def create_inventory():
             "Inventory for product with ID [%s] and condition [%s] created.",
             inventory.product_id,
             inventory.condition,
+        )
+
+        # Add product ID to status_dict (need to convert inventory.product_id to a string first)
+        status_dict[
+            (str(inventory.product_id), inventory.condition)
+        ] = update_status_type.ENABLED
+        app.logger.info(
+            "{(Product ID %s Condition %s), update_status_type %s} added to status_dict",
+            inventory.product_id,
+            inventory.condition,
+            update_status_type.ENABLED,
         )
     except IntegrityError:
         message = (
@@ -128,6 +253,16 @@ def update_inventory(product_id, condition):
             status.HTTP_404_NOT_FOUND,
             f"Inventory not found for product with ID {product_id} and condition {condition}",
         )
+    # check_condition_type already verified that condition is a valid enum value
+    elif (
+        status_dict[(str(product_id), Condition[condition])]
+        == update_status_type.DISABLED
+    ):
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Product ID {product_id} is currently disabled and cannot be updated",
+        )
+    # end if/else block
 
     update_json = request.get_json()
     quantity = update_json["quantity"]
