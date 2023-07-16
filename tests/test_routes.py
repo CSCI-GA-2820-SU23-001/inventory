@@ -406,7 +406,7 @@ class TestYourResourceServer(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_get_inventoryFactory(self):
+    def test_get_inventory(self):
         """It should Get a single inventory"""
         # get the id of a inventory
         test_inventory = InventoryFactory()
