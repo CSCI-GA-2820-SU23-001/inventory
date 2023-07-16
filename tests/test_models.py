@@ -8,7 +8,7 @@ import unittest
 import datetime
 from werkzeug.exceptions import NotFound
 from tests.factories import InventoryFactory
-from service.models import Inventory, Condition, DataValidationError, db
+from service.models import Inventory, Condition, DataValidationError, UpdateStatusType, db
 from service import app
 
 DATABASE_URI = os.getenv(
@@ -168,9 +168,11 @@ class TestInventory(unittest.TestCase):
         """It should serialize an Inventory"""
         inventory = InventoryFactory()
         self.assertEqual(inventory.last_updated_on, None)
+        self.assertEqual(inventory.can_update, UpdateStatusType.ENABLED)
         inventory.create()
         self.assertIsNotNone(inventory.product_id)
         self.assertNotEqual(inventory.last_updated_on, None)
+        self.assertEqual(inventory.can_update, UpdateStatusType.ENABLED)
         data = inventory.serialize()
         self.assertNotEqual(data, None)
         self.assertIn("product_id", data)
@@ -187,6 +189,8 @@ class TestInventory(unittest.TestCase):
             inventory.last_updated_on,
             delta=datetime.timedelta(seconds=0),
         )
+        self.assertIn("can_update", data)
+        self.assertEqual(data["can_update"], inventory.can_update.name)
 
     def test_deserialize_an_inventory(self):
         """It should de-serialize a inventory"""

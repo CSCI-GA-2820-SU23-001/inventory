@@ -129,61 +129,61 @@ class TestYourResourceServer(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Add some hard-coded inventory objects
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=1, condition=Condition.NEW, quantity=10, restock_level=1
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=2, condition=Condition.NEW, quantity=5, restock_level=1
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=3, condition=Condition.NEW, quantity=15, restock_level=1
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=4, condition=Condition.OPEN_BOX, quantity=30, restock_level=12
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=5, condition=Condition.USED, quantity=30, restock_level=12
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=6, condition=Condition.USED, quantity=300, restock_level=12
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=7, condition=Condition.USED, quantity=100, restock_level=12
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=8, condition=Condition.USED, quantity=15, restock_level=5
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=9, condition=Condition.OPEN_BOX, quantity=15, restock_level=5
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=10, condition=Condition.USED, quantity=150, restock_level=5
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
@@ -214,61 +214,61 @@ class TestYourResourceServer(TestCase):
         """It should list items we're running low on (based on restock level) in the inventory"""
 
         # Add some hard-coded inventory objects
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=1, condition=Condition.NEW, quantity=10, restock_level=11
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=2, condition=Condition.NEW, quantity=50, restock_level=60
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=3, condition=Condition.NEW, quantity=5, restock_level=1
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=4, condition=Condition.OPEN_BOX, quantity=30, restock_level=35
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=5, condition=Condition.USED, quantity=20, restock_level=20
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=6, condition=Condition.USED, quantity=500, restock_level=120
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=7, condition=Condition.USED, quantity=100, restock_level=120
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=8, condition=Condition.USED, quantity=15, restock_level=50
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=9, condition=Condition.OPEN_BOX, quantity=88, restock_level=95
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory = Inventory(
+        test_inventory = InventoryFactory(
             product_id=10, condition=Condition.USED, quantity=150, restock_level=150
         )
         response = self.client.post(BASE_URL, json=test_inventory.serialize())
@@ -406,7 +406,7 @@ class TestYourResourceServer(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_get_inventory(self):
+    def test_get_inventoryFactory(self):
         """It should Get a single inventory"""
         # get the id of a inventory
         test_inventory = InventoryFactory()
@@ -441,13 +441,13 @@ class TestYourResourceServer(TestCase):
         """Test the functionality of the enable/disable update action"""
 
         # Add things to the DB
-        test_inventory_first = Inventory(
+        test_inventory_first = InventoryFactory(
             product_id=1, condition=Condition.NEW, quantity=100, restock_level=10
         )
         response = self.client.post(BASE_URL, json=test_inventory_first.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory_second = Inventory(
+        test_inventory_second = InventoryFactory(
             product_id=2, condition=Condition.OPEN_BOX, quantity=100, restock_level=10
         )
         response = self.client.post(BASE_URL, json=test_inventory_second.serialize())
@@ -513,13 +513,13 @@ class TestYourResourceServer(TestCase):
         """Test the error handler of the enable/disable update action"""
 
         # Add things to the DB
-        test_inventory_first = Inventory(
+        test_inventory_first = InventoryFactory(
             product_id=1, condition=Condition.NEW, quantity=100, restock_level=10
         )
         response = self.client.post(BASE_URL, json=test_inventory_first.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        test_inventory_second = Inventory(
+        test_inventory_second = InventoryFactory(
             product_id=2, condition=Condition.NEW, quantity=100, restock_level=10
         )
         response = self.client.post(BASE_URL, json=test_inventory_second.serialize())

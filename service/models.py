@@ -35,6 +35,20 @@ class Condition(Enum):
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     FINAL = 4
 
+# end enum Condition
+
+
+class UpdateStatusType(Enum):
+    """ Enumeration of update status types """
+
+    DISABLED = (0,)
+    ENABLED = (1,)
+
+    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
+    UNKNOWN = 2
+
+# end enum UpdateStatusType
+
 
 class Inventory(db.Model):
     """
@@ -53,6 +67,7 @@ class Inventory(db.Model):
     last_updated_on = db.Column(
         db.DateTime, default=datetime.now, onupdate=datetime.now
     )
+    can_update = db.Column(db.Enum(UpdateStatusType), default=UpdateStatusType.ENABLED.name)
 
     def __repr__(self):
         return (
@@ -108,6 +123,7 @@ class Inventory(db.Model):
             "quantity": self.quantity,
             "restock_level": self.restock_level,
             "last_updated_on": self.last_updated_on,
+            "can_update": self.can_update.name,
         }
 
     def deserialize(self, data: dict):

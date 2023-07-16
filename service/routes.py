@@ -3,7 +3,7 @@ Inventory Service
 
 List, Create, Read, Update, and Delete products from the inventory database
 """
-from service.models import Inventory, Condition
+from service.models import Inventory, Condition, UpdateStatusType
 from flask import jsonify, request, abort
 from service.common import status  # HTTP Status Codes
 from sqlalchemy.exc import IntegrityError
@@ -27,22 +27,6 @@ class filter_type(Enum):
 
 
 # end enum filter_type
-
-
-class update_status_type(Enum):
-    """ Enumeration of update status types """
-
-    DISABLED = (0,)
-    ENABLED = (1,)
-
-    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
-    UNKNOWN = 2
-
-
-# end enum update_status_type
-
-# Global table where each tuple is a {(str Product ID, enum Condition), enum update_status_type} pair
-status_dict = {}
 
 
 ######################################################################
@@ -77,8 +61,16 @@ def enable_product_id(_product_id, _condition):
     )
 
     check_condition_type(_condition)
-    if (_product_id, Condition[_condition]) in status_dict:
-        status_dict[(_product_id, Condition[_condition])] = update_status_type.ENABLED
+    inventory = Inventory.find(_product_id, _condition)
+    if inventory is None:
+        app.logger.error(
+            "Tuple (%s, %s) does not exist in database", _product_id, _condition
+        )
+        abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
+    # check_condition_type already verified that condition is a valid enum value
+    else:
+        inventory.can_update = UpdateStatusType.ENABLED
+        inventory.update()
 
         app.logger.info(
             "Successfully enabled updates of product ID %s, condition %s",
@@ -95,14 +87,8 @@ def enable_product_id(_product_id, _condition):
             ),
             status.HTTP_200_OK,
         )
-    # end if
 
-    app.logger.error(
-        "Tuple (%s, %s) does not exist in status_dict", _product_id, _condition
-    )
-    abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
     # end if/else
-
 
 # end func enable_product_id
 
@@ -122,32 +108,33 @@ def disable_product_id(_product_id, _condition):
     )
 
     check_condition_type(_condition)
-    if (_product_id, Condition[_condition]) in status_dict:
-        status_dict[(_product_id, Condition[_condition])] = update_status_type.DISABLED
-
+    inventory = Inventory.find(_product_id, _condition)
+    if inventory is None:
         app.logger.info(
-            "Successfully disabled updates of product ID %s, condition %s",
-            _product_id,
-            _condition,
+            "Tuple (%s, %s) does not exist in database", _product_id, _condition
         )
-
-        return (
-            jsonify(
-                "Successfully disabled updates of product ID "
-                + _product_id
-                + " with condition "
-                + _condition
-            ),
-            status.HTTP_204_NO_CONTENT,
-        )
+        return jsonify("Invalid argument specified"), status.HTTP_204_NO_CONTENT
+    # check_condition_type already verified that condition is a valid enum value
     # end if
 
-    app.logger.info(
-        "Tuple (%s, %s) does not exist in status_dict", _product_id, _condition
-    )
-    return jsonify("Invalid argument specified"), status.HTTP_204_NO_CONTENT
-    # end if/else
+    inventory.can_update = UpdateStatusType.DISABLED
+    inventory.update()
 
+    app.logger.info(
+        "Successfully disabled updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    return (
+        jsonify(
+            "Successfully disabled updates of product ID "
+            + _product_id
+            + " with condition "
+            + _condition
+        ),
+        status.HTTP_204_NO_CONTENT,
+    )
 
 # end func disable_product_id
 
@@ -172,13 +159,6 @@ def delete_inventory(product_id, condition):
             condition,
         )
 
-        # Now delete the corresponding tuple from status_dict
-        status_dict.pop((str(product_id), Condition[condition]))
-        app.logger.info(
-            "Product_id %s, Condition %s removed from status_dict",
-            product_id,
-            condition,
-        )
     return ("", status.HTTP_204_NO_CONTENT)
 
 
@@ -202,21 +182,11 @@ def create_inventory():
         message = inventory.serialize()
         status_code = status.HTTP_201_CREATED
         app.logger.info(
-            "Inventory for product with ID [%s] and condition [%s] created.",
+            "Inventory for product with ID [%s] and condition [%s] created with can_update status set to ENABLED.",
             inventory.product_id,
             inventory.condition,
         )
 
-        # Add product ID to status_dict (need to convert inventory.product_id to a string first)
-        status_dict[
-            (str(inventory.product_id), inventory.condition)
-        ] = update_status_type.ENABLED
-        app.logger.info(
-            "{(Product ID %s Condition %s), update_status_type %s} added to status_dict",
-            inventory.product_id,
-            inventory.condition,
-            update_status_type.ENABLED,
-        )
     except IntegrityError:
         message = (
             "Primary key conflict: <%s, %s> key pair already exists in database"
@@ -254,10 +224,7 @@ def update_inventory(product_id, condition):
             f"Inventory not found for product with ID {product_id} and condition {condition}",
         )
     # check_condition_type already verified that condition is a valid enum value
-    elif (
-        status_dict[(str(product_id), Condition[condition])]
-        == update_status_type.DISABLED
-    ):
+    elif inventory.can_update == UpdateStatusType.DISABLED:
         abort(
             status.HTTP_400_BAD_REQUEST,
             f"Product ID {product_id} is currently disabled and cannot be updated",
@@ -331,6 +298,7 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
                     # twong, code crashes here if you do not convert entry.last_update_on to a string
                     # json cannot serialize DateTime objects
                     "last_updated_on": str(entry.last_updated_on),
+                    "can_update": entry.can_update.name,
                 }
             )
 
@@ -344,6 +312,7 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
             app.logger.info("quantity : %d", entry.quantity)
             app.logger.info("restock_level : %d", entry.restock_level)
             app.logger.info("last_updated_on : %s", str(entry.last_updated_on))
+            app.logger.info("can_update : %s", entry.can_update.name)
             app.logger.info(
                 "------------------------------------------------------------------"
             )
