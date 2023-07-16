@@ -4,7 +4,7 @@ Inventory Service
 List, Create, Read, Update, and Delete products from the inventory database
 """
 from service.models import Inventory, Condition
-from flask import Flask, jsonify, request, url_for, make_response, abort
+from flask import jsonify, request, abort
 from service.common import status  # HTTP Status Codes
 from sqlalchemy.exc import IntegrityError
 from enum import Enum
@@ -15,6 +15,7 @@ from service.utilities import check_content_type, check_condition_type
 # Import Flask application
 from . import app
 
+
 class filter_type(Enum):
     # Enumeration of filter types
 
@@ -23,34 +24,49 @@ class filter_type(Enum):
 
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     NONE = 2
+
+
 # end enum filter_type
+
 
 ######################################################################
 # GET INDEX
 ######################################################################
-@app.route("/", methods=['GET'])
+@app.route("/", methods=["GET"])
 def index():
-    """ Root URL response """
-    return ("<p>The inventory service keeps track of how many of each product we have in our warehouse</p>",
-            status.HTTP_200_OK)
-    
+    """Root URL response"""
+    return (
+        "<p>The inventory service keeps track of how many of each product we have in our warehouse</p>",
+        status.HTTP_200_OK,
+    )
+
 
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
+
 
 ######################################################################
 # DELETE A INVENTORY ITEM
 ######################################################################
 @app.route("/inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
 def delete_inventory(product_id, condition):
-    '''This endpoint will delete a product with the specified id and condition'''
-    app.logger.info("Request to delete a product with product_id %s and condition %s", product_id, condition)
-    product = Inventory.find(by_id=product_id, by_condition =condition)
+    """This endpoint will delete a product with the specified id and condition"""
+    app.logger.info(
+        "Request to delete a product with product_id %s and condition %s",
+        product_id,
+        condition,
+    )
+    product = Inventory.find(by_id=product_id, by_condition=condition)
     if product:
         product.delete()
-        app.logger.info("Product with product_id %s and condition %s deleted.", product_id, condition)
+        app.logger.info(
+            "Product with product_id %s and condition %s deleted.",
+            product_id,
+            condition,
+        )
     return ("", status.HTTP_204_NO_CONTENT)
+
 
 ######################################################################
 # ADD A NEW INVENTORY ITEM
@@ -71,13 +87,23 @@ def create_inventory():
         inventory.create()
         message = inventory.serialize()
         status_code = status.HTTP_201_CREATED
-        app.logger.info("Inventory for product with ID [%s] and condition [%s] created.", inventory.product_id, inventory.condition)
+        app.logger.info(
+            "Inventory for product with ID [%s] and condition [%s] created.",
+            inventory.product_id,
+            inventory.condition,
+        )
     except IntegrityError:
-        message = "Primary key conflict: <%s, %s> key pair already exists in database" % (inventory.product_id, inventory.condition)
+        message = (
+            "Primary key conflict: <%s, %s> key pair already exists in database"
+            % (inventory.product_id, inventory.condition)
+        )
         status_code = status.HTTP_409_CONFLICT
-        app.logger.info("Inventory for product with ID [%s] and condition [%s] already exists.")
+        app.logger.info(
+            "Inventory for product with ID [%s] and condition [%s] already exists."
+        )
 
     return jsonify(message), status_code
+
 
 ######################################################################
 # UPDATE AN INVENTORY ITEM
@@ -89,40 +115,57 @@ def update_inventory(product_id, condition):
     This endpoint will update the inventory listing for the specified product and condition
     based on the data in the body that is sent in the request
     """
-    app.logger.info("Request to update inventory for product with ID [%s] and condition [%s]", product_id, condition)
+    app.logger.info(
+        "Request to update inventory for product with ID [%s] and condition [%s]",
+        product_id,
+        condition,
+    )
     check_content_type("application/json")
     check_condition_type(condition)
     inventory = Inventory.find(product_id, condition)
     if inventory is None:
-        abort(status.HTTP_404_NOT_FOUND, f"Inventory not found for product with ID {product_id} and condition {condition}")
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Inventory not found for product with ID {product_id} and condition {condition}",
+        )
 
     update_json = request.get_json()
     quantity = update_json["quantity"]
     restock_level = update_json["restock_level"]
 
     if quantity < 0:
-        abort(status.HTTP_400_BAD_REQUEST, "Quantity to be updated must be higher or equal to 0.")
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            "Quantity to be updated must be higher or equal to 0.",
+        )
     if restock_level < 0:
-        abort(status.HTTP_400_BAD_REQUEST, "Restock level to be updated must be higher or equal to 0.")
-    
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            "Restock level to be updated must be higher or equal to 0.",
+        )
+
     message = ""
     inventory.quantity = quantity
     inventory.restock_level = restock_level
     inventory.update()
     message = inventory.serialize()
     status_code = status.HTTP_200_OK
-    app.logger.info("Inventory for product with ID [%s] and condition [%s] updated.", inventory.product_id, inventory.condition)
+    app.logger.info(
+        "Inventory for product with ID [%s] and condition [%s] updated.",
+        inventory.product_id,
+        inventory.condition,
+    )
 
     return jsonify(message), status_code
+
 
 ######################################################################
 # CREATE A LIST OF ITEMS
 ######################################################################
-def build_inventory_list(_input_filter_type : filter_type, _condition : Condition):
+def build_inventory_list(_input_filter_type: filter_type, _condition: Condition):
     my_list = list()
     index_number = 0
     for entry in Inventory().all():
-
         # To avoid duplicating code, list_all_items and list_items_criteria will both call this method
         # to build their lists. In list_all_items, we don't care about filtering on any criteria;
         # _input_filter_type will be NONE and _condition can be set to any value in the enum as it'll be ignored anyway
@@ -133,46 +176,63 @@ def build_inventory_list(_input_filter_type : filter_type, _condition : Conditio
         # 2. if _input_filter_type is of type RESTOCK, and _condition is FINAL (we don't care about condition), and
         # the entry's quantity is strictly less than its restock_level, then add it to the list
         if (
-            (_input_filter_type == filter_type.NONE and _condition == Condition.FINAL) or
-            (_input_filter_type == filter_type.CONDITION and entry.condition == _condition) or
-            (_input_filter_type == filter_type.RESTOCK and _condition == Condition.FINAL and entry.quantity < entry.restock_level)
-           ):
+            (_input_filter_type == filter_type.NONE and _condition == Condition.FINAL)
+            or (
+                _input_filter_type == filter_type.CONDITION
+                and entry.condition == _condition
+            )
+            or (
+                _input_filter_type == filter_type.RESTOCK
+                and _condition == Condition.FINAL
+                and entry.quantity < entry.restock_level
+            )
+        ):
             my_list.append(
-                            {
-                                "product_id" : entry.product_id,
-                                "condition" : entry.condition.name,
-                                "quantity" : entry.quantity,
-                                "restock_level" : entry.restock_level,
-
-                                # twong, code crashes here if you do not convert entry.last_update_on to a string
-                                # json cannot serialize DateTime objects
-                                "last_updated_on" : str(entry.last_updated_on)
-                            }
-                        )
+                {
+                    "product_id": entry.product_id,
+                    "condition": entry.condition.name,
+                    "quantity": entry.quantity,
+                    "restock_level": entry.restock_level,
+                    # twong, code crashes here if you do not convert entry.last_update_on to a string
+                    # json cannot serialize DateTime objects
+                    "last_updated_on": str(entry.last_updated_on),
+                }
+            )
 
             # Write the current entry's info to the log
-            app.logger.info("------------------------------------------------------------------")
+            app.logger.info(
+                "------------------------------------------------------------------"
+            )
             app.logger.info("Index : %d", index_number)
             app.logger.info("product_id : %d", entry.product_id)
             app.logger.info("condition : %s", entry.condition.name)
             app.logger.info("quantity : %d", entry.quantity)
             app.logger.info("restock_level : %d", entry.restock_level)
             app.logger.info("last_updated_on : %s", str(entry.last_updated_on))
-            app.logger.info("------------------------------------------------------------------")
+            app.logger.info(
+                "------------------------------------------------------------------"
+            )
             index_number += 1
         # end if
         else:
-            app.logger.error("Unknown arguments where _input_filter_type is %d and condition is %d", _input_filter_type, _condition)
+            app.logger.error(
+                "Unknown arguments where _input_filter_type is %d and condition is %d",
+                _input_filter_type,
+                _condition,
+            )
         # end block
     # end for
 
     return my_list
+
+
 # end func build_inventory_list
+
 
 ######################################################################
 # RETURN ALL ITEMS IN THE INVENTORY REGARDLESS OF CONDITION
 ######################################################################
-@app.route("/inventory", methods=['GET'])
+@app.route("/inventory", methods=["GET"])
 def list_all_items():
     app.logger.info("Request to list ALL items in the inventory...")
 
@@ -182,7 +242,10 @@ def list_all_items():
     ret_list = build_inventory_list(filter_type.NONE, Condition.FINAL)
     app.logger.info("There are %d items in the inventory", len(ret_list))
     return jsonify(ret_list), status.HTTP_200_OK
+
+
 # end func list_all_items
+
 
 ######################################################################
 # RETURN ALL ITEMS IN THE INVENTORY BASED ON A CRITERIA, WHERE CRITERIA
@@ -191,10 +254,11 @@ def list_all_items():
 # 1. CONDITION (NEW, OPEN_BOX, USED) OR
 # 2. RESTOCK
 ######################################################################
-@app.route("/inventory/<_criteria>", methods=['GET'])
-def list_items_criteria(_criteria : str):
-
-    app.logger.info("Request to list inventory items under a specific criteria: %s", _criteria)
+@app.route("/inventory/<_criteria>", methods=["GET"])
+def list_items_criteria(_criteria: str):
+    app.logger.info(
+        "Request to list inventory items under a specific criteria: %s", _criteria
+    )
 
     ret_list = list()
     match _criteria.upper():
@@ -209,12 +273,22 @@ def list_items_criteria(_criteria : str):
             ret_list = build_inventory_list(filter_type.RESTOCK, Condition.FINAL)
         case _:
             # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above
-            return "Unknown argument " + _criteria + " passed into URL", status.HTTP_400_BAD_REQUEST
+            return (
+                "Unknown argument " + _criteria + " passed into URL",
+                status.HTTP_400_BAD_REQUEST,
+            )
     # end switch
 
-    app.logger.info("There are %d items in the inventory under criteria %s", len(ret_list), _criteria)
+    app.logger.info(
+        "There are %d items in the inventory under criteria %s",
+        len(ret_list),
+        _criteria,
+    )
     return jsonify(ret_list), status.HTTP_200_OK
+
+
 # end func list_items_criteria
+
 
 ######################################################################
 # RETRIEVE AN INVENTORY
@@ -226,7 +300,9 @@ def get_inventories(product_id, condition):
 
     This endpoint will return an Inventory based on the product id and condition
     """
-    app.logger.info("Request for inventory with id: %s and condition %s", product_id, condition)
+    app.logger.info(
+        "Request for inventory with id: %s and condition %s", product_id, condition
+    )
     my_cond = Condition.FINAL
     match condition.upper():
         case "NEW":
@@ -237,11 +313,19 @@ def get_inventories(product_id, condition):
             my_cond = Condition.USED
         case _:
             # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above?
-            return "Unknown argument " + condition + " passed into URL", status.HTTP_400_BAD_REQUEST
+            return (
+                "Unknown argument " + condition + " passed into URL",
+                status.HTTP_400_BAD_REQUEST,
+            )
     # end switch
     inventory = Inventory.find(product_id, my_cond)
     if not inventory:
-        abort(status.HTTP_404_NOT_FOUND, f"Inventory with id '{product_id}' and condition '{condition}' was not found.")
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Inventory with id '{product_id}' and condition '{condition}' was not found.",
+        )
 
-    app.logger.info("Returning inventory: %s, %s", inventory.product_id, inventory.condition)
+    app.logger.info(
+        "Returning inventory: %s, %s", inventory.product_id, inventory.condition
+    )
     return jsonify(inventory.serialize()), status.HTTP_200_OK

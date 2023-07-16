@@ -17,12 +17,13 @@ db = SQLAlchemy()
 
 # Function to initialize the database
 def init_db(app):
-    """ Initializes the SQLAlchemy app """
+    """Initializes the SQLAlchemy app"""
     Inventory.init_db(app)
 
 
 class DataValidationError(Exception):
-    """ Used for an data validation errors when deserializing """
+    """Used for an data validation errors when deserializing"""
+
 
 class Condition(Enum):
     """Enumeration of valid condition of products"""
@@ -34,6 +35,7 @@ class Condition(Enum):
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     FINAL = 4
 
+
 class Inventory(db.Model):
     """
     Class that represents a Inventory
@@ -43,13 +45,19 @@ class Inventory(db.Model):
 
     # Table Schema
     product_id = db.Column(db.Integer, primary_key=True)
-    condition = db.Column(db.Enum(Condition), server_default=(Condition.NEW.name), primary_key=True)
+    condition = db.Column(
+        db.Enum(Condition), server_default=(Condition.NEW.name), primary_key=True
+    )
     quantity = db.Column(db.Integer, default=1)
-    restock_level = db.Column(db.Integer,default=1)
-    last_updated_on = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    restock_level = db.Column(db.Integer, default=1)
+    last_updated_on = db.Column(
+        db.DateTime, default=datetime.now, onupdate=datetime.now
+    )
 
     def __repr__(self):
-        return f"<Inventory product_id=[{self.product_id}] condition=[{self.condition}]>"
+        return (
+            f"<Inventory product_id=[{self.product_id}] condition=[{self.condition}]>"
+        )
 
     def create(self):
         """
@@ -69,7 +77,11 @@ class Inventory(db.Model):
         """
         Updates a Inventory to the database
         """
-        logger.info("Updating inventory product_id=%s,condition=%s",self.product_id,self.condition)
+        logger.info(
+            "Updating inventory product_id=%s,condition=%s",
+            self.product_id,
+            self.condition,
+        )
         if not self.product_id:
             raise DataValidationError("Update called with empty ID field")
         if not self.condition:
@@ -79,20 +91,26 @@ class Inventory(db.Model):
         db.session.commit()
 
     def delete(self):
-        """ Removes a Inventory from the data store """
-        logger.info("Deleting inventory product_id=%s,condition=%s",self.product_id,self.condition)
+        """Removes a Inventory from the data store"""
+        logger.info(
+            "Deleting inventory product_id=%s,condition=%s",
+            self.product_id,
+            self.condition,
+        )
         db.session.delete(self)
         db.session.commit()
 
     def serialize(self):
-        """ Serializes a Inventory into a dictionary """
-        return {"product_id": self.product_id,
-                "condition": self.condition.name,
-                "quantity": self.quantity,
-                "restock_level": self.restock_level,
-                "last_updated_on": self.last_updated_on}
+        """Serializes a Inventory into a dictionary"""
+        return {
+            "product_id": self.product_id,
+            "condition": self.condition.name,
+            "quantity": self.quantity,
+            "restock_level": self.restock_level,
+            "last_updated_on": self.last_updated_on,
+        }
 
-    def deserialize(self, data:dict):
+    def deserialize(self, data: dict):
         """
         Deserializes a Inventory from a dictionary
 
@@ -124,13 +142,14 @@ class Inventory(db.Model):
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid Inventory: body of request contained bad or no data " + str(error)
+                "Invalid Inventory: body of request contained bad or no data "
+                + str(error)
             ) from error
         return self
 
     @classmethod
     def init_db(cls, app):
-        """ Initializes the database session """
+        """Initializes the database session"""
         logger.info("Initializing database")
         cls.app = app
         # This is where we initialize SQLAlchemy from the Flask app
@@ -140,15 +159,21 @@ class Inventory(db.Model):
 
     @classmethod
     def all(cls):
-        """ Returns all of the Inventories in the database """
+        """Returns all of the Inventories in the database"""
         logger.info("Processing all Inventories")
         return cls.query.all()
 
     @classmethod
     def find(cls, by_id, by_condition):
-        """ Finds a Inventory by it's ID and condition """
-        logger.info("Processing lookup for product_id %s and condition %s ...", by_id, by_condition)
-        return cls.query.filter(cls.product_id == by_id, cls.condition == by_condition).first()
+        """Finds a Inventory by it's ID and condition"""
+        logger.info(
+            "Processing lookup for product_id %s and condition %s ...",
+            by_id,
+            by_condition,
+        )
+        return cls.query.filter(
+            cls.product_id == by_id, cls.condition == by_condition
+        ).first()
 
     @classmethod
     def find_or_404(cls, product_id: int, condition: Condition):
@@ -161,7 +186,11 @@ class Inventory(db.Model):
         :rtype: Inventory
 
         """
-        logger.info("Processing lookup or 404 for product_id %s, condition %s", product_id, condition)
+        logger.info(
+            "Processing lookup or 404 for product_id %s, condition %s",
+            product_id,
+            condition,
+        )
         return cls.query.get_or_404((product_id, condition))
 
     @classmethod

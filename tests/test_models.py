@@ -15,11 +15,12 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
 )
 
+
 ######################################################################
 #  Inventory   M O D E L   T E S T   C A S E S
 ######################################################################
 class TestInventory(unittest.TestCase):
-    """ Test Cases for Inventory Model """
+    """Test Cases for Inventory Model"""
 
     @classmethod
     def setUpClass(cls):
@@ -50,15 +51,21 @@ class TestInventory(unittest.TestCase):
 
     def test_create_a_inventory(self):
         """It should Create a Inventory and assert that it exists"""
-        inventory = Inventory(product_id=1, condition= Condition.NEW, quantity=1, restock_level=3)
-        self.assertEqual(str(inventory), "<Inventory product_id=[1] condition=[Condition.NEW]>")
+        inventory = Inventory(
+            product_id=1, condition=Condition.NEW, quantity=1, restock_level=3
+        )
+        self.assertEqual(
+            str(inventory), "<Inventory product_id=[1] condition=[Condition.NEW]>"
+        )
         self.assertTrue(inventory is not None)
         self.assertTrue(inventory.product_id is not None)
         self.assertEqual(inventory.condition, Condition.NEW)
         self.assertEqual(inventory.quantity, 1)
         self.assertEqual(inventory.restock_level, 3)
 
-        inventory = Inventory(product_id=2, condition=Condition.OPEN_BOX, restock_level=5)
+        inventory = Inventory(
+            product_id=2, condition=Condition.OPEN_BOX, restock_level=5
+        )
         self.assertEqual(inventory.quantity, None)
         self.assertEqual(inventory.condition, Condition.OPEN_BOX)
 
@@ -66,7 +73,9 @@ class TestInventory(unittest.TestCase):
         """It should Create a inventory and add it to the database"""
         inventories = Inventory.all()
         self.assertEqual(inventories, [])
-        inventory = Inventory(product_id=1, condition=Condition.NEW, quantity=10, restock_level=4)
+        inventory = Inventory(
+            product_id=1, condition=Condition.NEW, quantity=10, restock_level=4
+        )
         self.assertTrue(inventory is not None)
         self.assertTrue(inventory.product_id is not None)
         inventory.create()
@@ -173,7 +182,11 @@ class TestInventory(unittest.TestCase):
         self.assertIn("restock_level", data)
         self.assertEqual(data["restock_level"], inventory.restock_level)
         self.assertIn("last_updated_on", data)
-        self.assertAlmostEqual(data["last_updated_on"], inventory.last_updated_on, delta=datetime.timedelta(seconds=0))
+        self.assertAlmostEqual(
+            data["last_updated_on"],
+            inventory.last_updated_on,
+            delta=datetime.timedelta(seconds=0),
+        )
 
     def test_deserialize_an_inventory(self):
         """It should de-serialize a inventory"""
@@ -245,7 +258,9 @@ class TestInventory(unittest.TestCase):
         for inventory in inventories:
             inventory.create()
         condition = inventories[0].condition
-        count = len([inventory for inventory in inventories if inventory.condition == condition])
+        count = len(
+            [inventory for inventory in inventories if inventory.condition == condition]
+        )
         found = Inventory.find_by_condition(condition)
         self.assertEqual(found.count(), count)
         for inventory in found:
@@ -257,7 +272,9 @@ class TestInventory(unittest.TestCase):
         for inventory in inventories:
             inventory.create()
 
-        inventory = Inventory.find_or_404(inventories[1].product_id, inventories[1].condition)
+        inventory = Inventory.find_or_404(
+            inventories[1].product_id, inventories[1].condition
+        )
         self.assertIsNot(inventory, None)
         self.assertEqual(inventory.product_id, inventories[1].product_id)
         self.assertEqual(inventory.condition, inventories[1].condition)
