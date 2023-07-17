@@ -3,7 +3,7 @@ Inventory Service
 
 List, Create, Read, Update, and Delete products from the inventory database
 """
-from service.models import Inventory, Condition
+from service.models import Inventory, Condition, UpdateStatusType
 from flask import jsonify, request, abort
 from service.common import status  # HTTP Status Codes
 from sqlalchemy.exc import IntegrityError
@@ -17,10 +17,10 @@ from . import app
 
 
 class filter_type(Enum):
-    # Enumeration of filter types
+    """ Enumeration of filter types """
 
-    CONDITION = 0
-    RESTOCK = 1
+    CONDITION = (0,)
+    RESTOCK = (1,)
 
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     NONE = 2
@@ -47,6 +47,99 @@ def index():
 
 
 ######################################################################
+# ENABLE UPDATES OF A PRODUCT ID
+######################################################################
+@app.route(
+    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["PUT"]
+)
+def enable_product_id(_product_id, _condition):
+    """ ENABLE UPDATES OF A PRODUCT ID """
+    app.logger.info(
+        "Request to enable updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    check_condition_type(_condition)
+    inventory = Inventory.find(_product_id, _condition)
+    if inventory is None:
+        app.logger.error(
+            "Tuple (%s, %s) does not exist in database", _product_id, _condition
+        )
+        abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
+    # check_condition_type already verified that condition is a valid enum value
+    else:
+        inventory.can_update = UpdateStatusType.ENABLED
+        inventory.update()
+
+        app.logger.info(
+            "Successfully enabled updates of product ID %s, condition %s",
+            _product_id,
+            _condition,
+        )
+
+        return (
+            jsonify(
+                "Successfully enabled updates of product ID "
+                + _product_id
+                + " with condition "
+                + _condition
+            ),
+            status.HTTP_200_OK,
+        )
+
+    # end if/else
+
+# end func enable_product_id
+
+
+######################################################################
+# DISABLE UPDATES OF A PRODUCT ID
+######################################################################
+@app.route(
+    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["DELETE"]
+)
+def disable_product_id(_product_id, _condition):
+    """ DISABLE UPDATES OF A PRODUCT ID """
+    app.logger.info(
+        "Request to disable updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    check_condition_type(_condition)
+    inventory = Inventory.find(_product_id, _condition)
+    if inventory is None:
+        app.logger.info(
+            "Tuple (%s, %s) does not exist in database", _product_id, _condition
+        )
+        return jsonify("Invalid argument specified"), status.HTTP_204_NO_CONTENT
+    # check_condition_type already verified that condition is a valid enum value
+    # end if
+
+    inventory.can_update = UpdateStatusType.DISABLED
+    inventory.update()
+
+    app.logger.info(
+        "Successfully disabled updates of product ID %s, condition %s",
+        _product_id,
+        _condition,
+    )
+
+    return (
+        jsonify(
+            "Successfully disabled updates of product ID "
+            + _product_id
+            + " with condition "
+            + _condition
+        ),
+        status.HTTP_204_NO_CONTENT,
+    )
+
+# end func disable_product_id
+
+
+######################################################################
 # DELETE A INVENTORY ITEM
 ######################################################################
 @app.route("/inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
@@ -65,6 +158,7 @@ def delete_inventory(product_id, condition):
             product_id,
             condition,
         )
+
     return ("", status.HTTP_204_NO_CONTENT)
 
 
@@ -88,10 +182,11 @@ def create_inventory():
         message = inventory.serialize()
         status_code = status.HTTP_201_CREATED
         app.logger.info(
-            "Inventory for product with ID [%s] and condition [%s] created.",
+            "Inventory for product with ID [%s] and condition [%s] created with can_update status set to ENABLED.",
             inventory.product_id,
             inventory.condition,
         )
+
     except IntegrityError:
         message = (
             "Primary key conflict: <%s, %s> key pair already exists in database"
@@ -128,6 +223,13 @@ def update_inventory(product_id, condition):
             status.HTTP_404_NOT_FOUND,
             f"Inventory not found for product with ID {product_id} and condition {condition}",
         )
+    # check_condition_type already verified that condition is a valid enum value
+    elif inventory.can_update == UpdateStatusType.DISABLED:
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Product ID {product_id} is currently disabled and cannot be updated",
+        )
+    # end if/else block
 
     update_json = request.get_json()
     quantity = update_json["quantity"]
@@ -196,6 +298,7 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
                     # twong, code crashes here if you do not convert entry.last_update_on to a string
                     # json cannot serialize DateTime objects
                     "last_updated_on": str(entry.last_updated_on),
+                    "can_update": entry.can_update.name,
                 }
             )
 
@@ -209,6 +312,7 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
             app.logger.info("quantity : %d", entry.quantity)
             app.logger.info("restock_level : %d", entry.restock_level)
             app.logger.info("last_updated_on : %s", str(entry.last_updated_on))
+            app.logger.info("can_update : %s", entry.can_update.name)
             app.logger.info(
                 "------------------------------------------------------------------"
             )
