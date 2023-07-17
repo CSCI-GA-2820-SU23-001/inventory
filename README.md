@@ -27,6 +27,207 @@ These should be copied using a bash shell as follows:
     cp .gitattributes ../<your_repo_folder>/
 ```
 
+## Inventory Service APIs
+
+### Inventory Operations
+
+| Endpoint | Methods | Rule
+| -------------------------| ------- | --------------------------
+| create_inventory| POST| ```/inventory```
+| get_inventory | GET | ```/inventory```
+| get_specific_inventory| GET | ```/inventory/<int:product_id>/<condition>```
+| get_inventory_by_criteria| GET | ```/inventory/<_criteria>```
+| update_inventory | PUT| ```/inventory/<int:product_id>/<string:condition>```
+| delete_an_inventory| DELETE  | ```/inventory/<int:product_id>/<string:condition>```
+| list_inventory | GET| ```/inventory```
+
+## APIs Usage
+
+### Create an Inventory
+
+URL : `http://127.0.0.1:8000/inventory`
+
+Method : POST
+
+Auth required : No
+
+Permissions required : No
+
+Create an inventory using a JSON file that includes the product_id, condition, quantity, and restock level.
+
+Example:
+
+Request Body (JSON)
+
+```JSON
+
+{
+  "product_id": 301,
+  "condition": "NEW",
+  "quantity": 10,
+  "restock_level": 5
+}
+
+
+```
+
+Success Response : `HTTP_201_CREATED`
+
+```JSON
+
+{
+  "condition": "NEW",
+  "last_updated_on": "Mon, 17 Jul 2023 17:26:07 GMT",
+  "product_id": 301,
+  "quantity": 10,
+  "restock_level": 5
+}
+```
+
+### Read an Inventory
+
+URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
+
+Method : GET
+
+Auth required : No
+
+Permissions required : No
+
+Read all information of an inventory with given id and condition
+
+Example:
+
+Success Response : `HTTP_200_OK`
+
+```JSON
+
+{
+  "condition": "NEW",
+  "last_updated_on": "Mon, 17 Jul 2023 17:26:07 GMT",
+  "product_id": 301,
+  "quantity": 10,
+  "restock_level": 5
+}
+
+```
+
+Failure Response : `HTTP_404_NOT_FOUND`
+
+```JSON
+
+{
+  "error": "Not Found",
+  "message": "404 Not Found: Inventory with id '301' and condition 'USED' was not found.",
+  "status": 404
+}
+
+```
+
+### Update an Inventory
+
+URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
+
+Method : PUT
+
+Auth required : No
+
+Permissions required : No
+
+Updates an inventory with id provided in the URL according to the updated fields provided in the body
+
+Example:
+
+Request Body (JSON)
+
+```JSON
+
+{
+  "quantity": 25,
+  "restock_level": 5
+}
+
+```
+
+Success Response : `HTTP_200_OK`
+
+```JSON
+
+{
+  "condition": "NEW",
+  "last_updated_on": "Mon, 17 Jul 2023 17:32:01 GMT",
+  "product_id": 301,
+  "quantity": 25,
+  "restock_level": 5
+}
+
+```
+
+Failure Response : `HTTP_404_NOT_FOUND`
+
+```JSON
+
+{
+  "error": "Not Found",
+  "message": "404 Not Found: Inventory not found for product with ID 10 and condition NEW",
+  "status": 404
+}
+
+```
+
+### Delete an Inventory
+
+URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
+
+Method : DELETE
+
+Auth required : No
+
+Permissions required : No
+
+Deletes an inventory with id and condition
+
+Example:
+
+Success Response : `204 NO CONTENT`
+
+### List All Inventories
+
+URL : `http://127.0.0.1:8000/inventory`
+
+Method: GET
+
+Auth required : No
+
+Permissions required : No
+
+List all inventory records
+
+Example:
+
+Success Response : `HTTP_200_OK`
+
+```JSON
+
+[
+  {
+    "condition": "NEW",
+    "last_updated_on": "2023-07-17 17:26:07.460762",
+    "product_id": 301,
+    "quantity": 10,
+    "restock_level": 5
+  },
+  {
+    "condition": "NEW",
+    "last_updated_on": "2023-07-17 02:36:08.305311",
+    "product_id": 90,
+    "quantity": 90,
+    "restock_level": 90
+  }
+]
+
+```
+
 ## Contents
 
 The project contains the following:
@@ -60,10 +261,10 @@ tests/              - test cases package
 The project uses *honcho* which gets it's commands from the `Procfile`. To start the service simply use:
 
 ```shell
-$ honcho start
+ honcho start
 ```
 
-You should be able to reach the service at: http://localhost:8000. The port that is used is controlled by an environment variable defined in the `.flaskenv` file which Flask uses to load it's configuration from the environment by default.
+You should be able to reach the service at: `http://localhost:8000`. The port that is used is controlled by an environment variable defined in the `.flaskenv` file which Flask uses to load it's configuration from the environment by default.
 
 ## License
 
