@@ -35,17 +35,19 @@ class Condition(Enum):
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     FINAL = 4
 
+
 # end enum Condition
 
 
 class UpdateStatusType(Enum):
-    """ Enumeration of update status types """
+    """Enumeration of update status types"""
 
     DISABLED = (0,)
     ENABLED = (1,)
 
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     UNKNOWN = 2
+
 
 # end enum UpdateStatusType
 
@@ -67,7 +69,9 @@ class Inventory(db.Model):
     last_updated_on = db.Column(
         db.DateTime, default=datetime.now, onupdate=datetime.now
     )
-    can_update = db.Column(db.Enum(UpdateStatusType), default=UpdateStatusType.ENABLED.name)
+    can_update = db.Column(
+        db.Enum(UpdateStatusType), default=UpdateStatusType.ENABLED.name
+    )
 
     def __repr__(self):
         return (
@@ -136,6 +140,7 @@ class Inventory(db.Model):
         try:
             self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
+            self.can_update = getattr(UpdateStatusType, data["can_update"])
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:

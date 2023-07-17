@@ -4,7 +4,7 @@ Inventory Service
 List, Create, Read, Update, and Delete products from the inventory database
 """
 from service.models import Inventory, Condition, UpdateStatusType
-from flask import jsonify, request, abort, url_for
+from flask import jsonify, request, abort
 from service.common import status  # HTTP Status Codes
 from sqlalchemy.exc import IntegrityError
 from enum import Enum
