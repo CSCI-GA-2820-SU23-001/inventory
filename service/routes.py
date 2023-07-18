@@ -17,7 +17,7 @@ from . import app
 
 
 class filter_type(Enum):
-    """ Enumeration of filter types """
+    """Enumeration of filter types"""
 
     CONDITION = (0,)
     RESTOCK = (1,)
@@ -32,11 +32,13 @@ class filter_type(Enum):
 ######################################################################
 # GET INDEX
 ######################################################################
-@app.route("/", methods=["GET"])
+@app.route("/")
 def index():
     """Root URL response"""
     return (
-        "<p>The inventory service keeps track of how many of each product we have in our warehouse</p>",
+        jsonify(
+            "The Inventory RESTful Microservice manages and monitors inventory in our warehouse"
+        ),
         status.HTTP_200_OK,
     )
 
@@ -53,7 +55,7 @@ def index():
     "/inventory/<string:_product_id>/<string:_condition>/active", methods=["PUT"]
 )
 def enable_product_id(_product_id, _condition):
-    """ ENABLE UPDATES OF A PRODUCT ID """
+    """ENABLE UPDATES OF A PRODUCT ID"""
     app.logger.info(
         "Request to enable updates of product ID %s, condition %s",
         _product_id,
@@ -90,6 +92,7 @@ def enable_product_id(_product_id, _condition):
 
     # end if/else
 
+
 # end func enable_product_id
 
 
@@ -100,7 +103,7 @@ def enable_product_id(_product_id, _condition):
     "/inventory/<string:_product_id>/<string:_condition>/active", methods=["DELETE"]
 )
 def disable_product_id(_product_id, _condition):
-    """ DISABLE UPDATES OF A PRODUCT ID """
+    """DISABLE UPDATES OF A PRODUCT ID"""
     app.logger.info(
         "Request to disable updates of product ID %s, condition %s",
         _product_id,
@@ -135,6 +138,7 @@ def disable_product_id(_product_id, _condition):
         ),
         status.HTTP_204_NO_CONTENT,
     )
+
 
 # end func disable_product_id
 
