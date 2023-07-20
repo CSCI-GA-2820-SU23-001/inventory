@@ -10,8 +10,6 @@ from service.models import Condition
 # Import Flask application
 from . import app
 
-
-
 ######################################################################
 # UTILITY FUNCTIONS
 ######################################################################
