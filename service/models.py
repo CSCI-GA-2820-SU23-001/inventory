@@ -140,7 +140,7 @@ class Inventory(db.Model):
         try:
             self.product_id = data["product_id"]
             self.condition = getattr(Condition, data["condition"])
-            self.can_update = getattr(UpdateStatusType, data["can_update"])
+            self.can_update = UpdateStatusType.ENABLED
             if isinstance(data["quantity"], int):
                 self.quantity = data["quantity"]
             else:
