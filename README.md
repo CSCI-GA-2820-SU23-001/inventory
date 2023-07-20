@@ -2,7 +2,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
-[![Build Status](https://github.com/CSCI-GA-2820-SU23-001/inventory/actions/workflows/tdd.yml/badge.svg)]
+[![Build Status](https://github.com/CSCI-GA-2820-SU23-001/inventory/actions/workflows/tdd.yml/badge.svg)](https://github.com/CSCI-GA-2820-SU23-001/inventory/actions)
+[![codecov](https://app.codecov.io/gh/CSCI-GA-2820-SU23-001/inventory/mmclslwsl%2Fissue34/graph/badge.svg)](https://app.codecov.io/gh/CSCI-GA-2820-SU23-001/inventory)
 
 This is a skeleton you can use to start your projects
 
