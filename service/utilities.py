@@ -5,11 +5,11 @@ Utilities for Inventory API endpoints
 
 from flask import request, abort
 from service.common import status  # HTTP Status Codes
+from service.models import Condition
 
 # Import Flask application
 from . import app
 
-from service.models import Condition
 
 
 ######################################################################

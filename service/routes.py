@@ -3,20 +3,24 @@ Inventory Service
 
 List, Create, Read, Update, and Delete products from the inventory database
 """
-from service.models import Inventory, Condition, UpdateStatusType
-from flask import jsonify, request, abort
-from service.common import status  # HTTP Status Codes
-from sqlalchemy.exc import IntegrityError
+# Standard library imports
 from enum import Enum
 
-# Import utilities
+# Third-party imports
+
+from flask import jsonify, request, abort
+from sqlalchemy.exc import IntegrityError
+
+# Local imports
+from service.models import Inventory, Condition, UpdateStatusType
+from service.common import status  # HTTP Status Codes
 from service.utilities import check_content_type, check_condition_type
 
 # Import Flask application
 from . import app
 
 
-class filter_type(Enum):
+class FilterType(Enum):
     """Enumeration of filter types"""
 
     CONDITION = (0,)
@@ -26,7 +30,7 @@ class filter_type(Enum):
     NONE = 2
 
 
-# end enum filter_type
+# end enum FilterType
 
 ############################################################
 # Health Endpoint
@@ -200,10 +204,7 @@ def create_inventory():
         )
 
     except IntegrityError:
-        message = (
-            "Primary key conflict: <%s, %s> key pair already exists in database"
-            % (inventory.product_id, inventory.condition)
-        )
+        message = f"Primary key conflict: <{inventory.product_id}, {inventory.condition}> key pair already exists in database"
         status_code = status.HTTP_409_CONFLICT
         app.logger.info(
             "Inventory for product with ID [%s] and condition [%s] already exists."
@@ -276,8 +277,11 @@ def update_inventory(product_id, condition):
 ######################################################################
 # CREATE A LIST OF ITEMS
 ######################################################################
-def build_inventory_list(_input_filter_type: filter_type, _condition: Condition):
-    my_list = list()
+def build_inventory_list(_input_filter_type: FilterType, _condition: Condition):
+    """
+    Create a list of items
+    """
+    my_list = []
     index_number = 0
     for entry in Inventory().all():
         # To avoid duplicating code, list_all_items and list_items_criteria will both call this method
@@ -289,18 +293,7 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
         # 1. if _input_filter_type is of type CONDITION and the entry's condition matches _condition, add it to the list
         # 2. if _input_filter_type is of type RESTOCK, and _condition is FINAL (we don't care about condition), and
         # the entry's quantity is strictly less than its restock_level, then add it to the list
-        if (
-            (_input_filter_type == filter_type.NONE and _condition == Condition.FINAL)
-            or (
-                _input_filter_type == filter_type.CONDITION
-                and entry.condition == _condition
-            )
-            or (
-                _input_filter_type == filter_type.RESTOCK
-                and _condition == Condition.FINAL
-                and entry.quantity < entry.restock_level
-            )
-        ):
+        if should_process_entry(_input_filter_type, _condition, entry):
             my_list.append(
                 {
                     "product_id": entry.product_id,
@@ -344,18 +337,35 @@ def build_inventory_list(_input_filter_type: filter_type, _condition: Condition)
 
 # end func build_inventory_list
 
+def should_process_entry(_input_filter_type, _condition, entry):
+    """
+    Check the condition for build_inventory_list()
+    """
+    return (
+        (_input_filter_type == FilterType.NONE and _condition == Condition.FINAL)
+        or (_input_filter_type == FilterType.CONDITION and entry.condition == _condition)
+        or (
+            _input_filter_type == FilterType.RESTOCK
+            and _condition == Condition.FINAL
+            and entry.quantity < entry.restock_level
+        )
+    )
+
 
 ######################################################################
 # RETURN ALL ITEMS IN THE INVENTORY REGARDLESS OF CONDITION
 ######################################################################
 @app.route("/inventory", methods=["GET"])
 def list_all_items():
+    """
+    List all items.
+    """
     app.logger.info("Request to list ALL items in the inventory...")
 
     # This function is expected to always return a status code of 200, unless the server is down
     # If there's nothing in the warehouse, the returned list will be empty. See build_inventory_list
     # for an explanation of the arguments being passed into it
-    ret_list = build_inventory_list(filter_type.NONE, Condition.FINAL)
+    ret_list = build_inventory_list(FilterType.NONE, Condition.FINAL)
     app.logger.info("There are %d items in the inventory", len(ret_list))
     return jsonify(ret_list), status.HTTP_200_OK
 
@@ -372,21 +382,24 @@ def list_all_items():
 ######################################################################
 @app.route("/inventory/<_criteria>", methods=["GET"])
 def list_items_criteria(_criteria: str):
+    """
+    List items that meet the criteria.
+    """
     app.logger.info(
         "Request to list inventory items under a specific criteria: %s", _criteria
     )
 
-    ret_list = list()
+    ret_list = []
     match _criteria.upper():
         case "NEW":
             # See build_inventory_list for an explanation of the arguments being passed into it
-            ret_list = build_inventory_list(filter_type.CONDITION, Condition.NEW)
+            ret_list = build_inventory_list(FilterType.CONDITION, Condition.NEW)
         case "OPEN_BOX":
-            ret_list = build_inventory_list(filter_type.CONDITION, Condition.OPEN_BOX)
+            ret_list = build_inventory_list(FilterType.CONDITION, Condition.OPEN_BOX)
         case "USED":
-            ret_list = build_inventory_list(filter_type.CONDITION, Condition.USED)
+            ret_list = build_inventory_list(FilterType.CONDITION, Condition.USED)
         case "RESTOCK":
-            ret_list = build_inventory_list(filter_type.RESTOCK, Condition.FINAL)
+            ret_list = build_inventory_list(FilterType.RESTOCK, Condition.FINAL)
         case _:
             # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above
             return (

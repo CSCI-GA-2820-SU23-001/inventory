@@ -50,7 +50,7 @@ class TestYourResourceServer(TestCase):
         """This runs after each test"""
         db.session.remove()
 
-    def _create_product_id(self, count):
+    def _create_product_id(self):
         """Factory method to create products in bulk"""
         test_product_id = InventoryFactory()
         response = self.client.post(BASE_URL, json=test_product_id.serialize())
@@ -78,7 +78,7 @@ class TestYourResourceServer(TestCase):
 
     def test_delete_product(self):
         """Test deleting a product"""
-        test_product = self._create_product_id(1)
+        test_product = self._create_product_id()
         response = self.client.delete(
             f"{BASE_URL}/{test_product['product_id']}/{test_product['condition']}"
         )
@@ -105,7 +105,7 @@ class TestYourResourceServer(TestCase):
         self.assertEqual(len(ret_list), 0)
 
         # Add 50 inventory objects with random data into the DB
-        for number in range(50):
+        for _ in range(50):
             test_inventory = InventoryFactory()
             response = self.client.post(BASE_URL, json=test_inventory.serialize())
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
