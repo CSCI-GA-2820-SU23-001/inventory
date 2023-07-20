@@ -24,7 +24,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: inventory
-        image: us.icr.io/inventory-su23/inventory:1.0
+        image: us.icr.io/inventory-su23/inventory:3.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
