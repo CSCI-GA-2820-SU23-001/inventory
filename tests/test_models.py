@@ -4,12 +4,11 @@ Test cases for Inventory Model
 """
 import os
 import logging
-import unittest
 import datetime
 from werkzeug.exceptions import NotFound
 from tests.factories import InventoryFactory
-from service.models import Inventory, Condition, DataValidationError, UpdateStatusType, db
-from service import app
+from tests.parent_models import TestInventoryModel
+from service.models import Inventory, Condition, DataValidationError, UpdateStatusType
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
@@ -19,36 +18,8 @@ DATABASE_URI = os.getenv(
 ######################################################################
 #  Inventory   M O D E L   T E S T   C A S E S
 ######################################################################
-class TestInventory(unittest.TestCase):
-    """Test Cases for Inventory Model"""
-
-    @classmethod
-    def setUpClass(cls):
-        """This runs once before the entire test suite"""
-        app.config["TESTING"] = True
-        app.config["DEBUG"] = False
-        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.logger.setLevel(logging.CRITICAL)
-        Inventory.init_db(app)
-
-    @classmethod
-    def tearDownClass(cls):
-        """This runs once after the entire test suite"""
-        db.session.close()
-
-    def setUp(self):
-        """This runs before each test"""
-        db.session.query(Inventory).delete()  # clean up the last tests
-        db.session.commit()
-
-    def tearDown(self):
-        """This runs after each test"""
-        db.session.remove()
-
-    ######################################################################
-    #  T E S T   C A S E S
-    ######################################################################
-
+class TestInventoryCreate(TestInventoryModel):
+    """Test Cases for Inventory Model Creation"""
     def test_create_a_inventory(self):
         """It should Create a Inventory and assert that it exists"""
         inventory = Inventory(
@@ -98,6 +69,9 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventories[0].quantity, 1)
         self.assertEqual(inventories[0].restock_level, 1)
 
+
+class TestInventoryRead(TestInventoryModel):
+    """Test Cases for Inventory Model Read"""
     def test_read_a_inventory(self):
         """It should Read a Inventory"""
         inventory = InventoryFactory()
@@ -109,6 +83,9 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(found_inventory.product_id, inventory.product_id)
         self.assertEqual(found_inventory.condition, inventory.condition)
 
+
+class TestInventoryUpdate(TestInventoryModel):
+    """Test Cases for Inventory Model Update"""
     def test_update_a_inventory(self):
         """It should Update a Inventory"""
         inventory = InventoryFactory()
@@ -143,6 +120,9 @@ class TestInventory(unittest.TestCase):
         inventory.condition = None
         self.assertRaises(DataValidationError, inventory.update)
 
+
+class TestInventoryDelete(TestInventoryModel):
+    """Test Cases for Inventory Model Delete"""
     def test_delete_an_inventory(self):
         """It should Delete a inventory"""
         inventory = InventoryFactory()
@@ -152,6 +132,9 @@ class TestInventory(unittest.TestCase):
         inventory.delete()
         self.assertEqual(len(Inventory.all()), 0)
 
+
+class TestInventoryList(TestInventoryModel):
+    """Test Cases for Inventory Model List"""
     def test_list_all_inventories(self):
         """It should List all inventories in the database"""
         inventories = Inventory.all()
@@ -164,6 +147,9 @@ class TestInventory(unittest.TestCase):
         inventories = Inventory.all()
         self.assertEqual(len(inventories), 5)
 
+
+class TestInventorySerialize(TestInventoryModel):
+    """Test Cases for Inventory Model Serialize"""
     def test_serialize_an_inventory(self):
         """It should serialize an Inventory"""
         inventory = InventoryFactory()
@@ -192,6 +178,9 @@ class TestInventory(unittest.TestCase):
         self.assertIn("can_update", data)
         self.assertEqual(data["can_update"], inventory.can_update.name)
 
+
+class TestInventoryDeserialize(TestInventoryModel):
+    """Test Cases for Inventory Model Deserialize"""
     def test_deserialize_an_inventory(self):
         """It should de-serialize a inventory"""
         data = InventoryFactory().serialize()
@@ -240,6 +229,9 @@ class TestInventory(unittest.TestCase):
         inventory = Inventory()
         self.assertRaises(DataValidationError, inventory.deserialize, data)
 
+
+class TestInventoryFind(TestInventoryModel):
+    """Test Cases for Inventory Model Find"""
     def test_find_inventory(self):
         """It should Find a inventory by ID"""
         inventories = InventoryFactory.create_batch(5)
