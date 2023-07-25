@@ -5,51 +5,33 @@ Test cases can be run with the following:
   nosetests -v --with-spec --spec-color
   coverage report -m
 """
-import os
 import logging
-from unittest import TestCase
-from service import app
-from service.models import Condition, Inventory, db
+from service.models import Condition
 from service.common import status
 from tests.factories import InventoryFactory  # HTTP Status Codes
+from tests.parent_models import TestResourceServer
 
-
-DATABASE_URI = os.getenv(
-    "DATABASE_URI", "postgresql://postgres:postgres@postgres:5432/testdb"
-)
 BASE_URL = "/inventory"
 
 
-######################################################################
-#  T E S T   C A S E S
-######################################################################
-class TestYourResourceServer(TestCase):
-    """REST API Server Tests"""
+class TestYourResourceServerHealth(TestResourceServer):
+    """Test Cases for Inventory Resource Server Health"""
+    def test_health(self):
+        """It should call the health endpoint"""
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    @classmethod
-    def setUpClass(cls):
-        """This runs once before the entire test suite"""
-        app.config["TESTING"] = True
-        app.config["DEBUG"] = False
-        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.logger.setLevel(logging.CRITICAL)
-        Inventory.init_db(app)
 
-    @classmethod
-    def tearDownClass(cls):
-        """This runs once after the entire test suite"""
-        db.session.close()
+class TestYourResourceServerIndex(TestResourceServer):
+    """Test Cases for Inventory Resource Server Index"""
+    def test_index(self):
+        """It should call the home page"""
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    def setUp(self):
-        """This runs before each test"""
-        self.client = app.test_client()
-        db.session.query(Inventory).delete()  # clean up the last tests
-        db.session.commit()
 
-    def tearDown(self):
-        """This runs after each test"""
-        db.session.remove()
-
+class TestYourResourceServerDelete(TestResourceServer):
+    """Test Cases for Inventory Resource Server Delete"""
     def _create_product_id(self):
         """Factory method to create products in bulk"""
         test_product_id = InventoryFactory()
@@ -61,20 +43,6 @@ class TestYourResourceServer(TestCase):
         )
         new_product_id = response.get_json()
         return new_product_id
-
-    ######################################################################
-    #  P L A C E   T E S T   C A S E S   H E R E
-    ######################################################################
-
-    def test_health(self):
-        """It should call the health endpoint"""
-        resp = self.client.get("/health")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-    def test_index(self):
-        """It should call the home page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_delete_product(self):
         """Test deleting a product"""
@@ -94,6 +62,9 @@ class TestYourResourceServer(TestCase):
         response = self.client.delete(f"{BASE_URL}/0/OPEN_BOX")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+
+class TestYourResourceServerList(TestResourceServer):
+    """Test Cases for Inventory Resource Server List"""
     def test_list_all_items(self):
         """It should list all of the items in the inventory"""
         # Test the list_all_items function in routes.py
@@ -288,6 +259,9 @@ class TestYourResourceServer(TestCase):
 
     # end func test_list_items_criteria_restock
 
+
+class TestYourResourceServerCreate(TestResourceServer):
+    """Test Cases for Inventory Resource Server Create"""
     def test_create_inventory_success(self):
         """It should Create a new Inventory item"""
         test_inventory = InventoryFactory()
@@ -345,6 +319,9 @@ class TestYourResourceServer(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
+
+class TestYourResourceServerUpdate(TestResourceServer):
+    """Test Cases for Inventory Resource Server Update"""
     def test_update_normally(self):
         """Update normally"""
         test_inventory = InventoryFactory(condition=Condition.NEW)
@@ -411,6 +388,9 @@ class TestYourResourceServer(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+
+class TestYourResourceServerGet(TestResourceServer):
+    """Test Cases for Inventory Resource Server Get"""
     def test_get_inventory(self):
         """It should Get a single inventory"""
         # get the id of a inventory
@@ -442,6 +422,9 @@ class TestYourResourceServer(TestCase):
         response = self.client.get(f"{BASE_URL}/0/FINAL")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+
+class TestYourResourceServerEnableDisableUpdate(TestResourceServer):
+    """Test Cases for Inventory Resource Server Enable and Disable Update"""
     def test_enable_disable_update_action(self):
         """Test the functionality of the enable/disable update action"""
 
