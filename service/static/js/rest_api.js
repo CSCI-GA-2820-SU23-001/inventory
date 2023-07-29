@@ -1,3 +1,6 @@
+// This text box is disabled, it can only be populated when retrieving info
+document.getElementById("inventory_last_updated_on").disabled = true;
+
 $(function () {
 
     // ****************************************
@@ -8,8 +11,6 @@ $(function () {
     function update_form_data(res) {
         $("#inventory_product_id").val(res.product_id);
         $("#inventory_condition").val(res.condition);
-        $("#inventory_product_id_ret_del").val(res.product_id);
-        $("#inventory_condition_ret_del").val(res.condition);
         $("#inventory_quantity").val(res.quantity);
         $("#inventory_restock_level").val(res.restock_level);
         $("#inventory_last_updated_on").val(res.last_updated_on);
@@ -20,8 +21,13 @@ $(function () {
     function clear_form_data() {
         $("#inventory_product_id").val("");
         $("#inventory_condition").val("");
+
         $("#inventory_product_id_ret_del").val("");
         $("#inventory_condition_ret_del").val("");
+
+        $("#inventory_product_id_enb_dsb").val("");
+        $("#inventory_condition_enb_dsb").val("");
+
         $("#inventory_quantity").val("");
         $("#inventory_restock_level").val("");
         $("#inventory_last_updated_on").val("");
@@ -44,7 +50,7 @@ $(function () {
         let condition = $("#inventory_condition").val();
         let quantity = parseInt($("#inventory_quantity").val(), 10);
         let restock_level = parseInt($("#inventory_restock_level").val(), 10);
-        let last_updated_on = $("#inventory_last_updated_on").val();
+        let last_updated_on = new Date();
         let can_update = $("#inventory_can_update").val();
 
         let data = {
@@ -67,7 +73,7 @@ $(function () {
 
         ajax.done(function(res){
             update_form_data(res)
-            flash_message("Success")
+            flash_message("Successfully created product ID " + product_id)
         });
 
         ajax.fail(function(res){
@@ -109,7 +115,7 @@ $(function () {
 
         ajax.done(function(res){
             update_form_data(res)
-            flash_message("Success")
+            flash_message("Successfully updated product ID " + product_id)
         });
 
         ajax.fail(function(res){
@@ -137,9 +143,8 @@ $(function () {
         })
 
         ajax.done(function(res){
-            //alert(res.toSource())
             update_form_data(res)
-            flash_message("Success")
+            flash_message("Successfully retrieved info of product ID " + product_id)
         });
 
         ajax.fail(function(res){
@@ -169,7 +174,7 @@ $(function () {
 
         ajax.done(function(res){
             clear_form_data()
-            flash_message("Inventory has been Deleted!")
+            flash_message("Successfully deleted product ID " + product_id)
         });
 
         ajax.fail(function(res){
@@ -201,8 +206,7 @@ $(function () {
             data: ''
         })
 
-        ajax.done(function(res){
-            //alert(res.toSource())            
+        ajax.done(function(res){         
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
@@ -229,7 +233,7 @@ $(function () {
                 update_form_data(firstInventory)
             }
 
-            flash_message("Success")
+            flash_message("Successfully returned a list of items that need to be restocked")
         });
 
         ajax.fail(function(res){
@@ -252,8 +256,7 @@ $(function () {
             data: ''
         })
 
-        ajax.done(function(res){
-            //alert(res.toSource())            
+        ajax.done(function(res){        
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
@@ -280,7 +283,7 @@ $(function () {
                 update_form_data(firstInventory)
             }
 
-            flash_message("Success")
+            flash_message("Successfully returned a list of all the items")
         });
 
         ajax.fail(function(res){
@@ -303,8 +306,7 @@ $(function () {
             data: ''
         })
 
-        ajax.done(function(res){
-            //alert(res.toSource())            
+        ajax.done(function(res){        
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
@@ -331,7 +333,7 @@ $(function () {
                 update_form_data(firstInventory)
             }
 
-            flash_message("Success")
+            flash_message("Successfully returned a list of all NEW items")
         });
 
         ajax.fail(function(res){
@@ -382,7 +384,7 @@ $(function () {
                 update_form_data(firstInventory)
             }
 
-            flash_message("Success")
+            flash_message("Successfully returned a list of all OPEN_BOX items")
         });
 
         ajax.fail(function(res){
@@ -405,8 +407,7 @@ $(function () {
             data: ''
         })
 
-        ajax.done(function(res){
-            //alert(res.toSource())            
+        ajax.done(function(res){       
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
@@ -433,13 +434,69 @@ $(function () {
                 update_form_data(firstInventory)
             }
 
-            flash_message("Success")
+            flash_message("Successfully returned a list of all USED items")
         });
 
         ajax.fail(function(res){
             flash_message(res.responseJSON.message)
         });
 
+    });
+
+    // ****************************************
+    // Enable item updates
+    // ****************************************
+
+    $("#enable-update-btn").click(function () {
+
+        let product_id = $("#inventory_product_id_enb_dsb").val();
+        let condition = $("#inventory_condition_enb_dsb").val();
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "PUT",
+            url: `/inventory/${product_id}/${condition}/active`,
+            contentType: "application/json",
+            data: '',
+        })
+
+        ajax.done(function(res){
+            clear_form_data()
+            flash_message("Enabled product ID " + product_id + " updates")
+        });
+
+        ajax.fail(function(res){
+            flash_message("Server error!")
+        });
+    });
+
+    // ****************************************
+    // Disable item updates
+    // ****************************************
+
+    $("#disable-update-btn").click(function () {
+
+        let product_id = $("#inventory_product_id_enb_dsb").val();
+        let condition = $("#inventory_condition_enb_dsb").val();
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "DELETE",
+            url: `/inventory/${product_id}/${condition}/active`,
+            contentType: "application/json",
+            data: '',
+        })
+
+        ajax.done(function(res){
+            clear_form_data()
+            flash_message("Disabled product ID " + product_id + " updates")
+        });
+
+        ajax.fail(function(res){
+            flash_message("Server error!")
+        });
     });
 
 })
