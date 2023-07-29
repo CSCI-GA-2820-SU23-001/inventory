@@ -21,9 +21,9 @@
         </table>
       </div>
 
-      <!-- RETRIEVE AND DELETE FORM -->
+      <!-- CRUD AND LIST FORM -->
       <div class="col-md-12" id="form_data">
-        <h3>Retrieve and Delete Inventory:</h3>
+        <h3>CRUD and List operations. Note that, for retrieving and deleting, you only need to specify a product ID and condition!</h3>
         <div class="well">
           <div class="form-horizontal">
 
@@ -31,7 +31,7 @@
             <div class="form-group">
               <label class="control-label col-sm-2" for="inventory_product_id">Inventory ID:</label>
               <div class="col-sm-10">
-                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_product_id" placeholder="Enter product ID of existing item">
+                <input type="number" step="1" pattern="\d+" class="form-control" name="inventory_product_id" id="inventory_product_id" placeholder="Enter product ID of a new item">
               </div>
             </div>
             <!-- END PRODUCT ID -->
@@ -40,49 +40,7 @@
             <div class="form-group">
               <label class="control-label col-sm-2" for="inventory_condition">Condition:</label>
               <div class="col-sm-10">
-                <select class="form-control" id="inventory_condition">
-                  <option value="NEW" selected>NEW</option>
-                  <option value="OPEN_BOX">OPEN_BOX</option>
-                  <option value="USED">USED</option>
-                </select>
-              </div>
-            </div>
-            <!-- END CONDITION -->
-
-            <!-- RETRIEVE AND DELETE BUTTONS -->
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
-                <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
-              </div>
-            </div>
-            <!-- END RETRIEVE AND DELETE BUTTONS -->            
-
-          </div> <!-- end form horizontal -->          
-        </div> <!-- end well -->
-      </div>
-      <!-- END RETRIEVE AND DELETE FORM -->      
-
-      <!-- CREATE, UPDATE, AND LIST FORM -->
-      <div class="col-md-12" id="form_data">
-        <h3>Create, Update, and Get Inventory:</h3>
-        <div class="well">
-          <div class="form-horizontal">
-
-            <!-- PRODUCT ID -->
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="inventory_product_id">Inventory ID:</label>
-              <div class="col-sm-10">
-                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_product_id" placeholder="Enter product ID of a new item">
-              </div>
-            </div>
-            <!-- END PRODUCT ID -->
-
-            <!-- CONDITION -->
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="inventory_condition">Condition:</label>
-              <div class="col-sm-10">
-                <select class="form-control" id="inventory_condition">
+                <select class="form-control" id="inventory_condition" name="inventory_condition">
                   <option value="NEW" selected>NEW</option>
                   <option value="OPEN_BOX">OPEN_BOX</option>
                   <option value="USED">USED</option>
@@ -122,7 +80,7 @@
             <div class="form-group">
               <label class="control-label col-sm-2" for="inventory_can_update">Item updates:</label>
               <div class="col-sm-10">
-                <select class="form-control" id="inventory_can_update">
+                <select class="form-control" id="inventory_can_update" name="inventory_can_update">
                   <option value="DISABLED" selected>Disabled</option>
                   <option value="ENABLED">Enabled</option>
                 </select>
@@ -141,12 +99,14 @@
                 <button type="submit" class="btn btn-primary" id="search-btn-open-box">Search Open Box</button>
                 <button type="submit" class="btn btn-primary" id="search-btn-used">Search Used</button>
                 <button type="submit" class="btn btn-primary" id="clear-btn">Clear</button>
+                <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
+                <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
               </div>
             </div>
           </div> <!-- form horizontal -->
         </div> <!-- end well -->
       </div>
-      <!-- END CREATE, UPDATE, AND LIST FORM -->
+      <!-- END CRUD AND LIST FORM -->
 
       <!-- Search Results -->
       <div class="table-responsive col-md-12" id="search_results">

@@ -17,7 +17,6 @@ services:
       FLASK_DEBUG: "True"
       PORT: 8000
       DATABASE_URI: postgresql://postgres:postgres@postgres:5432/postgres
-      WAIT_SECONDS: 5
     networks:
       - dev
     depends_on:

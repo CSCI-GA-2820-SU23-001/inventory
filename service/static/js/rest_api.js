@@ -36,7 +36,7 @@ $(function () {
 
     $("#create-btn").click(function () {
 
-        let product_id = $("#inventory_product_id").val();
+        let product_id = parseInt($("#inventory_product_id").val(), 10);
         let condition = $("#inventory_condition").val();
         let quantity = parseInt($("#inventory_quantity").val(), 10);
         let restock_level = parseInt($("#inventory_restock_level").val(), 10);
@@ -44,7 +44,7 @@ $(function () {
         let can_update = $("#inventory_can_update").val();
 
         let data = {
-            "product_id": Math.floor(Math.random() * 1000),
+            "product_id": product_id,
             "condition": condition,
             "quantity": quantity,
             "restock_level": restock_level,
