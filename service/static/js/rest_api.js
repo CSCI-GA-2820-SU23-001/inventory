@@ -8,6 +8,8 @@ $(function () {
     function update_form_data(res) {
         $("#inventory_product_id").val(res.product_id);
         $("#inventory_condition").val(res.condition);
+        $("#inventory_product_id_ret_del").val(res.product_id);
+        $("#inventory_condition_ret_del").val(res.condition);
         $("#inventory_quantity").val(res.quantity);
         $("#inventory_restock_level").val(res.restock_level);
         $("#inventory_last_updated_on").val(res.last_updated_on);
@@ -18,6 +20,8 @@ $(function () {
     function clear_form_data() {
         $("#inventory_product_id").val("");
         $("#inventory_condition").val("");
+        $("#inventory_product_id_ret_del").val("");
+        $("#inventory_condition_ret_del").val("");
         $("#inventory_quantity").val("");
         $("#inventory_restock_level").val("");
         $("#inventory_last_updated_on").val("");
@@ -120,8 +124,8 @@ $(function () {
 
     $("#retrieve-btn").click(function () {
 
-        let product_id = $("#inventory_product_id").val();
-        let condition = $("#inventory_condition").val();
+        let product_id = $("#inventory_product_id_ret_del").val();
+        let condition = $("#inventory_condition_ret_del").val();
 
         $("#flash_message").empty();
 
@@ -151,8 +155,8 @@ $(function () {
 
     $("#delete-btn").click(function () {
 
-        let product_id = $("#inventory_product_id").val();
-        let condition = $("#inventory_condition").val();
+        let product_id = $("#inventory_product_id_ret_del").val();
+        let condition = $("#inventory_condition_ret_del").val();
 
         $("#flash_message").empty();
 
