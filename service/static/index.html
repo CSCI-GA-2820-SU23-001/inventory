@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Inventory Demo RESTful Service</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="static/images/newapp-icon.png">
+    <link rel="stylesheet" href="static/css/cerulean_bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+          <h1>Inventory Demo REST API Service</h1>
+      </div>
+
+      <!-- Flash Message -->
+      <div class="table-responsive">
+        <table class="table">
+          <tr><td>Status:</td><td><span id="flash_message"></span></td></tr>
+        </table>
+      </div>
+
+      <!-- RETRIEVE AND DELETE FORM -->
+      <div class="col-md-12" id="form_data">
+        <h3>Retrieve and Delete Inventory:</h3>
+        <div class="well">
+          <div class="form-horizontal">
+
+            <!-- PRODUCT ID -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_product_id">Inventory ID:</label>
+              <div class="col-sm-10">
+                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_product_id" placeholder="Enter product ID of existing item">
+              </div>
+            </div>
+            <!-- END PRODUCT ID -->
+
+            <!-- CONDITION -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_condition">Condition:</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="inventory_condition">
+                  <option value="NEW" selected>NEW</option>
+                  <option value="OPEN_BOX">OPEN_BOX</option>
+                  <option value="USED">USED</option>
+                </select>
+              </div>
+            </div>
+            <!-- END CONDITION -->
+
+            <!-- RETRIEVE AND DELETE BUTTONS -->
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
+                <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
+              </div>
+            </div>
+            <!-- END RETRIEVE AND DELETE BUTTONS -->            
+
+          </div> <!-- end form horizontal -->          
+        </div> <!-- end well -->
+      </div>
+      <!-- END RETRIEVE AND DELETE FORM -->      
+
+      <!-- CREATE, UPDATE, AND LIST FORM -->
+      <div class="col-md-12" id="form_data">
+        <h3>Create, Update, and Get Inventory:</h3>
+        <div class="well">
+          <div class="form-horizontal">
+
+            <!-- PRODUCT ID -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_product_id">Inventory ID:</label>
+              <div class="col-sm-10">
+                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_product_id" placeholder="Enter product ID of a new item">
+              </div>
+            </div>
+            <!-- END PRODUCT ID -->
+
+            <!-- CONDITION -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_condition">Condition:</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="inventory_condition">
+                  <option value="NEW" selected>NEW</option>
+                  <option value="OPEN_BOX">OPEN_BOX</option>
+                  <option value="USED">USED</option>
+                </select>
+              </div>
+            </div>
+            <!-- END CONDITION -->
+            
+            <!-- QUANTITY -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_quantity">Quantity:</label>
+              <div class="col-sm-10">
+                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_quantity" placeholder="Enter quantity of a new item">
+              </div>
+            </div>
+            <!-- END QUANTITY -->
+
+            <!-- RESTOCK LEVEL -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_restock_level">Restock Level:</label>
+              <div class="col-sm-10">
+                <input type="number" step="1" pattern="\d+" class="form-control" id="inventory_restock_level" placeholder="Enter restock level of a new item">
+              </div>
+            </div>
+            <!-- END RESTOCK LEVEL -->
+
+            <!-- LAST UPDATED ON -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_last_updated_on">Last updated on:</label>
+              <div class="col-sm-10">
+                <input type="date" class="form-control" id="inventory_last_updated_on" placeholder="2020-04-01">
+              </div>
+            </div>
+            <!-- END LAST UPDATED ON -->
+
+            <!-- CAN UPDATE -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="inventory_can_update">Item updates:</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="inventory_can_update">
+                  <option value="DISABLED" selected>Disabled</option>
+                  <option value="ENABLED">Enabled</option>
+                </select>
+              </div>
+            </div>
+            <!-- END CAN UPDATE -->
+
+            <!-- SUBMIT BUTTONS -->
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-success" id="create-btn">Create</button>
+                <button type="submit" class="btn btn-warning" id="update-btn">Update</button>                
+                <button type="submit" class="btn btn-primary" id="search-btn-restock">Search Restock</button>
+                <button type="submit" class="btn btn-primary" id="search-btn-all">Get all</button>
+                <button type="submit" class="btn btn-primary" id="search-btn-new">Search New</button>
+                <button type="submit" class="btn btn-primary" id="search-btn-open-box">Search Open Box</button>
+                <button type="submit" class="btn btn-primary" id="search-btn-used">Search Used</button>
+                <button type="submit" class="btn btn-primary" id="clear-btn">Clear</button>
+              </div>
+            </div>
+          </div> <!-- form horizontal -->
+        </div> <!-- end well -->
+      </div>
+      <!-- END CREATE, UPDATE, AND LIST FORM -->
+
+      <!-- Search Results -->
+      <div class="table-responsive col-md-12" id="search_results">
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th class="col-md-1">Product ID</th>
+            <th class="col-md-4">Condition</th>
+            <th class="col-md-4">Quantity</th>
+            <th class="col-md-3">Restock Level</th>
+            <th class="col-md-3">Last Updated On</th>
+            <th class="col-md-3">Updates status</th>
+          </tr>
+          </thead>
+        </table>
+      </div>
+      <!-- END SEARCH RESULTS -->
+
+      <footer>
+        <br><br>
+        <p>&copy; NYU DevOps Inventory Company 2023</p>
+      </footer>
+
+    </div> <!-- container -->
+
+  <script type="text/javascript" src = "static/js/jquery-3.6.0.min.js"></script>
+  <script type="text/javascript" src = "static/js/bootstrap.min.js"></script>
+
+  <!-- YOUR REST API -->
+  <script type="text/javascript" src="static/js/rest_api.js"></script>
+
+  </body>
+</html>
