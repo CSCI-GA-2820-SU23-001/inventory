@@ -1,4 +1,4 @@
-# This image has selenium and chrome driver already installed
+# Image for a NYU Lab development environment
 FROM rofrano/pipeline-selenium:latest
 
 # Become a regular user for development
