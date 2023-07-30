@@ -30,7 +30,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions
 
-ID_PREFIX = 'pet_'
+ID_PREFIX = 'inventory_'
 
 
 @when('I visit the "home page"')
@@ -60,6 +60,20 @@ def step_impl(context, element_name, text_string):
 @when('I select "{text}" in the "{element_name}" dropdown')
 def step_impl(context, text, element_name):
     element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
+    element = Select(context.driver.find_element(By.ID, element_id))
+    element.select_by_visible_text(text)
+
+# RETRIEVE AND DELETION FORM
+@when('I set the "{element_name}" in the retrieve/delete form to "{text_string}"')
+def step_impl(context, element_name, text_string):
+    element_id = ID_PREFIX + element_name.lower().replace(' ', '_') + "_ret_del"
+    element = context.driver.find_element(By.ID, element_id)
+    element.clear()
+    element.send_keys(text_string)
+
+@when('I select "{text}" in the "{element_name}" in the retrieve/delete form dropdown')
+def step_impl(context, text, element_name):
+    element_id = ID_PREFIX + element_name.lower().replace(' ', '_') + "_ret_del"
     element = Select(context.driver.find_element(By.ID, element_id))
     element.select_by_visible_text(text)
 
@@ -109,6 +123,31 @@ def step_impl(context, button):
     button_id = button.lower() + '-btn'
     context.driver.find_element(By.ID, button_id).click()
 
+@when('I press the "{button}" all button')
+def step_impl(context, button):
+    button_id = button.lower() + '-btn-all'
+    context.driver.find_element(By.ID, button_id).click()
+
+@when('I press the "{button}" new button')
+def step_impl(context, button):
+    button_id = button.lower() + '-btn-new'
+    context.driver.find_element(By.ID, button_id).click()
+
+@when('I press the "{button}" used button')
+def step_impl(context, button):
+    button_id = button.lower() + '-btn-used'
+    context.driver.find_element(By.ID, button_id).click()
+
+@when('I press the "{button}" open box button')
+def step_impl(context, button):
+    button_id = button.lower() + '-btn-open-box'
+    context.driver.find_element(By.ID, button_id).click()
+
+@when('I press the "{button}" restock button')
+def step_impl(context, button):
+    button_id = button.lower() + '-btn-restock'
+    context.driver.find_element(By.ID, button_id).click()
+
 @then('I should see "{name}" in the results')
 def step_impl(context, name):
     found = WebDriverWait(context.driver, context.wait_seconds).until(
@@ -133,6 +172,11 @@ def step_impl(context, message):
         )
     )
     assert(found)
+
+@then('I should not see the message "{message}"')
+def step_impl(context, message):
+    element = context.driver.find_element(By.ID, 'flash_message')
+    assert(message not in element.text)
 
 ##################################################################
 # This code works because of the following naming convention:

@@ -1,89 +1,120 @@
-Feature: The pet store service back-end
-    As a Pet Store Owner
+Feature: The inventory service back-end
+    As a manager of our warehouse
     I need a RESTful catalog service
-    So that I can keep track of all my pets
+    So that I can keep track of all the inventory in our warehouse
 
 Background:
-    Given the following pets
-        | name       | category | available | gender  | birthday   |
-        | fido       | dog      | True      | MALE    | 2019-11-18 |
-        | kitty      | cat      | True      | FEMALE  | 2020-08-13 |
-        | leo        | lion     | False     | MALE    | 2021-04-01 |
-        | sammy      | snake    | True      | UNKNOWN | 2018-06-04 |
+    Given the following inventory
+        | product_id | condition | quantity | restock_level  | last_updated_on   | can_update |
+        | 1          | NEW       | 50       | 10             | 2019-11-18        | ENABLED |
+        | 2          | OPEN_BOX  | 70       | 15             | 2020-08-13        | ENABLED |
+        | 3          | USED      | 90       | 110            | 2021-04-01        | DISABLED |
+        | 4          | NEW       | 100      | 20             | 2018-06-04        | ENABLED |
 
 Scenario: The server is running
     When I visit the "Home Page"
-    Then I should see "Pet Demo RESTful Service" in the title
+    Then I should see "Inventory Demo RESTful Service" in the title
     And I should not see "404 Not Found"
 
-Scenario: Create a Pet
+Scenario: Create an Inventory
     When I visit the "Home Page"
-    And I set the "Name" to "Happy"
-    And I set the "Category" to "Hippo"
-    And I select "False" in the "Available" dropdown
-    And I select "Male" in the "Gender" dropdown
-    And I set the "Birthday" to "06-16-2022"
+    And I set the "product_id" to "5"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "40"
+    And I set the "restock_level" to "65"
+    And I select "ENABLED" in the "can_update" dropdown
     And I press the "Create" button
-    Then I should see the message "Success"
-    When I copy the "Id" field
-    And I press the "Clear" button
-    Then the "Id" field should be empty
-    And the "Name" field should be empty
-    And the "Category" field should be empty
-    When I paste the "Id" field
+    Then I should see the message "Successfully created product ID 5"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW" in the results
+    And I should see "2 OPEN_BOX" in the results
+    And I should see "3 USED" in the results
+    And I should see "4 NEW" in the results
+    And I should see "5 NEW" in the results
+
+Scenario: Retrieve an Inventory
+    When I visit the "Home Page"
+    And I set the "product_id" in the retrieve/delete form to "1"
+    And I select "NEW" in the "condition" in the retrieve/delete form dropdown
     And I press the "Retrieve" button
-    Then I should see the message "Success"
-    And I should see "Happy" in the "Name" field
-    And I should see "Hippo" in the "Category" field
-    And I should see "False" in the "Available" dropdown
-    And I should see "Male" in the "Gender" dropdown
-    And I should see "2022-06-16" in the "Birthday" field
+    Then I should see the message "Successfully retrieved info of product ID 1"
 
-Scenario: List all pets
+Scenario: Update an Inventory
     When I visit the "Home Page"
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "fido" in the results
-    And I should see "kitty" in the results
-    And I should not see "leo" in the results
-
-Scenario: Search for dogs
-    When I visit the "Home Page"
-    And I set the "Category" to "dog"
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "fido" in the results
-    And I should not see "kitty" in the results
-    And I should not see "leo" in the results
-
-Scenario: Search for available
-    When I visit the "Home Page"
-    And I select "True" in the "Available" dropdown
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "fido" in the results
-    And I should see "kitty" in the results
-    And I should see "sammy" in the results
-    And I should not see "leo" in the results
-
-Scenario: Update a Pet
-    When I visit the "Home Page"
-    And I set the "Name" to "fido"
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "fido" in the "Name" field
-    And I should see "dog" in the "Category" field
-    When I change "Name" to "Loki"
+    And I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "510"
+    And I set the "restock_level" to "10"
     And I press the "Update" button
-    Then I should see the message "Success"
-    When I copy the "Id" field
-    And I press the "Clear" button
-    And I paste the "Id" field
-    And I press the "Retrieve" button
-    Then I should see the message "Success"
-    And I should see "Loki" in the "Name" field
-    When I press the "Clear" button
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "Loki" in the results
-    And I should not see "fido" in the results
+    Then I should see the message "Successfully updated product ID 1"
+    When I set the "product_id" to "3"
+    And I select "USED" in the "condition" dropdown
+    And I set the "quantity" to "700"
+    And I set the "restock_level" to "110"
+    And I press the "Update" button
+    Then I should not see the message "Successfully updated product ID 3"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW 510 10" in the results
+    And I should see "2 OPEN_BOX 70 15" in the results
+    And I should see "3 USED 90 110" in the results
+    And I should see "4 NEW 100 20 " in the results
+
+Scenario: Delete an Inventory
+    When I visit the "Home Page"
+    And I set the "product_id" in the retrieve/delete form to "1"
+    And I select "NEW" in the "condition" in the retrieve/delete form dropdown
+    And I press the "Delete" button
+    Then I should see the message "Successfully deleted product ID 1"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "2 OPEN_BOX" in the results
+    And I should see "3 USED" in the results
+    And I should see "4 NEW" in the results
+    But I should not see "1 NEW" in the results
+
+Scenario: List all inventory
+    When I visit the "Home Page"
+    And I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW" in the results
+    And I should see "2 OPEN_BOX" in the results
+    And I should see "3 USED" in the results
+    And I should see "4 NEW" in the results
+
+Scenario: List only new inventory
+    When I visit the "Home Page"
+    And I press the "Search" new button
+    Then I should see the message "Successfully returned a list of all NEW items"
+    And I should see "1 NEW" in the results
+    And I should see "4 NEW" in the results
+    But I should not see "2 OPEN_BOX" in the results
+    And I should not see "3 USED" in the results
+
+Scenario: List only used inventory
+    When I visit the "Home Page"
+    And I press the "Search" used button
+    Then I should see the message "Successfully returned a list of all USED items"
+    And I should see "3 USED" in the results
+    But I should not see "1 NEW" in the results
+    And I should not see "2 OPEN_BOX" in the results
+    And I should not see "4 NEW" in the results
+
+Scenario: List only open box inventory
+    When I visit the "Home Page"
+    And I press the "Search" open box button
+    Then I should see the message "Successfully returned a list of all OPEN_BOX items"
+    And I should see "2 OPEN_BOX" in the results
+    But I should not see "1 NEW" in the results
+    And I should not see "3 USED" in the results
+    And I should not see "4 NEW" in the results
+
+Scenario: List only by restock
+    When I visit the "Home Page"
+    And I press the "Search" restock button
+    Then I should see the message "Successfully returned a list of items that need to be restocked"
+    And I should see "3 USED" in the results
+    But I should not see "1 NEW" in the results
+    And I should not see "2 OPEN_BOX" in the results
+    And I should not see "4 NEW" in the results

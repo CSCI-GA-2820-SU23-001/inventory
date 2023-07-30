@@ -30,26 +30,27 @@ HTTP_200_OK = 200
 HTTP_201_CREATED = 201
 HTTP_204_NO_CONTENT = 204
 
-@given('the following pets')
+@given('the following inventory')
 def step_impl(context):
-    """ Delete all Pets and load new ones """
+    """ Delete all Inventory and load new ones """
 
-    # List all of the pets and delete them one by one
-    rest_endpoint = f"{context.base_url}/pets"
+    # List all of the inventory and delete them one by one
+    rest_endpoint = f"{context.base_url}/inventory"
     context.resp = requests.get(rest_endpoint)
     assert(context.resp.status_code == HTTP_200_OK)
-    for pet in context.resp.json():
-        context.resp = requests.delete(f"{rest_endpoint}/{pet['id']}")
+    for inventory in context.resp.json():
+        context.resp = requests.delete(f"{rest_endpoint}/{inventory['product_id']}/{inventory['condition']}")
         assert(context.resp.status_code == HTTP_204_NO_CONTENT)
 
-    # load the database with new pets
+    # load the database with new inventory
     for row in context.table:
         payload = {
-            "name": row['name'],
-            "category": row['category'],
-            "available": row['available'] in ['True', 'true', '1'],
-            "gender": row['gender'],
-            "birthday": row['birthday']
+            "product_id": row['product_id'],
+            "condition": row['condition'],
+            "quantity": int(row['quantity']),
+            "restock_level": int(row['restock_level']),
+            "last_updated_on": row['last_updated_on'],
+            "can_update": row['can_update']
         }
         context.resp = requests.post(rest_endpoint, json=payload)
         assert(context.resp.status_code == HTTP_201_CREATED)

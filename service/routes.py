@@ -320,7 +320,7 @@ def build_inventory_list(_input_filter_type: FilterType, _condition: Condition):
         # end if
         else:
             app.logger.info(
-                "Ignoring arguments where _input_filter_type is %d and condition is %d",
+                "Ignoring arguments where _input_filter_type is %s and condition is %s",
                 _input_filter_type,
                 _condition,
             )
