@@ -76,6 +76,7 @@ def step_impl(context, text, element_name):
     element_id = ID_PREFIX + element_name.lower().replace(' ', '_') + "_ret_del"
     element = Select(context.driver.find_element(By.ID, element_id))
     element.select_by_visible_text(text)
+# END RETRIEVE AND DELETE FORM
 
 @then('I should see "{text}" in the "{element_name}" dropdown')
 def step_impl(context, text, element_name):

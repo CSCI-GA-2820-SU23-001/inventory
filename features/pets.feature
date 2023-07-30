@@ -39,6 +39,11 @@ Scenario: Retrieve an Inventory
     And I select "NEW" in the "condition" in the retrieve/delete form dropdown
     And I press the "Retrieve" button
     Then I should see the message "Successfully retrieved info of product ID 1"
+    And I should see "1" in the "product_id" field
+    And I should see "NEW" in the "condition" dropdown
+    And I should see "50" in the "quantity" field
+    And I should see "10" in the "restock_level" field
+    And I should see "ENABLED" in the "can_update" dropdown
 
 Scenario: Update an Inventory
     When I visit the "Home Page"
