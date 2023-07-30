@@ -123,3 +123,38 @@ Scenario: List only by restock
     But I should not see "1 NEW" in the results
     And I should not see "2 OPEN_BOX" in the results
     And I should not see "4 NEW" in the results
+
+Scenario: Test the enable/disable item updates action
+    When I visit the "Home Page"
+    And I set the "product_id" in the enable/disable item updates form to "1"
+    And I select "NEW" in the "condition" in the enable/disable item updates form dropdown
+    And I press the "Disable-Update" button
+    Then I should see the message "Disabled product ID 1 updates"
+    When I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "9000"
+    And I set the "restock_level" to "8000"
+    And I press the "Update" button
+    Then I should not see the message "Successfully updated product ID 1"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW 50 10" in the results
+    And I should see "2 OPEN_BOX 70 15" in the results
+    And I should see "3 USED 90 110" in the results
+    And I should see "4 NEW 100 20 " in the results
+    When I set the "product_id" in the enable/disable item updates form to "1"
+    And I select "NEW" in the "condition" in the enable/disable item updates form dropdown
+    And I press the "Enable-Update" button
+    Then I should see the message "Enabled product ID 1 updates"
+    When I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "9000"
+    And I set the "restock_level" to "8000"
+    And I press the "Update" button
+    Then I should see the message "Successfully updated product ID 1"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW 9000 8000" in the results
+    And I should see "2 OPEN_BOX 70 15" in the results
+    And I should see "3 USED 90 110" in the results
+    And I should see "4 NEW 100 20 " in the results

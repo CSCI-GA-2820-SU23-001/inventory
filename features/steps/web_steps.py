@@ -78,6 +78,21 @@ def step_impl(context, text, element_name):
     element.select_by_visible_text(text)
 # END RETRIEVE AND DELETE FORM
 
+# ITEM ENABLE/DISABLE UPDATES FORM
+@when('I set the "{element_name}" in the enable/disable item updates form to "{text_string}"')
+def step_impl(context, element_name, text_string):
+    element_id = ID_PREFIX + element_name.lower().replace(' ', '_') + "_enb_dsb"
+    element = context.driver.find_element(By.ID, element_id)
+    element.clear()
+    element.send_keys(text_string)
+
+@when('I select "{text}" in the "{element_name}" in the enable/disable item updates form dropdown')
+def step_impl(context, text, element_name):
+    element_id = ID_PREFIX + element_name.lower().replace(' ', '_') + "_enb_dsb"
+    element = Select(context.driver.find_element(By.ID, element_id))
+    element.select_by_visible_text(text)
+# END ITEM ENABLE/DISABLE UPDATES FORM
+
 @then('I should see "{text}" in the "{element_name}" dropdown')
 def step_impl(context, text, element_name):
     element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
