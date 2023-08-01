@@ -394,7 +394,49 @@ class TestYourResourceServerGet(TestResourceServer):
     def test_get_inventory(self):
         """It should Get a single inventory"""
         # get the id of a inventory
-        test_inventory = InventoryFactory()
+        test_inventory = InventoryFactory(
+            product_id=5, condition=Condition.NEW, quantity=30, restock_level=12
+        )
+        logging.debug(
+            "Test Inventory create successful: %s", test_inventory.serialize()
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(
+            f"{BASE_URL}/{test_inventory.product_id}/{test_inventory.condition.name}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["product_id"], test_inventory.product_id)
+        self.assertEqual(data["condition"], test_inventory.condition.name)
+        self.assertEqual(data["quantity"], test_inventory.quantity)
+        self.assertEqual(data["restock_level"], test_inventory.restock_level)
+
+        # Now do OPEN_BOX
+        test_inventory = InventoryFactory(
+            product_id=5, condition=Condition.OPEN_BOX, quantity=30, restock_level=12
+        )
+        logging.debug(
+            "Test Inventory create successful: %s", test_inventory.serialize()
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(
+            f"{BASE_URL}/{test_inventory.product_id}/{test_inventory.condition.name}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["product_id"], test_inventory.product_id)
+        self.assertEqual(data["condition"], test_inventory.condition.name)
+        self.assertEqual(data["quantity"], test_inventory.quantity)
+        self.assertEqual(data["restock_level"], test_inventory.restock_level)
+
+        # Now do USED
+        test_inventory = InventoryFactory(
+            product_id=5, condition=Condition.USED, quantity=30, restock_level=12
+        )
         logging.debug(
             "Test Inventory create successful: %s", test_inventory.serialize()
         )
