@@ -42,4 +42,5 @@ def get_firefox():
     """Creates a headless Firefox driver"""
     options = webdriver.FirefoxOptions()
     options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
     return webdriver.Firefox(options=options)
