@@ -47,12 +47,7 @@ def health():
 @app.route("/")
 def index():
     """Root URL response"""
-    return (
-        jsonify(
-            "The Inventory RESTful Microservice manages and monitors inventory in our warehouse"
-        ),
-        status.HTTP_200_OK,
-    )
+    return app.send_static_file("index.html")
 
 
 ######################################################################
@@ -324,8 +319,8 @@ def build_inventory_list(_input_filter_type: FilterType, _condition: Condition):
             index_number += 1
         # end if
         else:
-            app.logger.error(
-                "Unknown arguments where _input_filter_type is %d and condition is %d",
+            app.logger.info(
+                "Ignoring arguments where _input_filter_type is %s and condition is %s",
                 _input_filter_type,
                 _condition,
             )

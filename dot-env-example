@@ -1,2 +1,3 @@
-# Copy this file to .env to expose these environment variables
+PORT=8080
 FLASK_APP=service:app
+WAIT_SECONDS=5
