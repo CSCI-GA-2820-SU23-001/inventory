@@ -15,16 +15,16 @@ def before_all(context):
     context.wait_seconds = WAIT_SECONDS
     # Select either Chrome or Firefox
     if 'firefox' in DRIVER:
-        context.driver = get_firefox()
+        context.webdriver = get_firefox()
     else:
-        context.driver = get_chrome()
-    context.driver.implicitly_wait(context.wait_seconds)
+        context.webdriver = get_chrome()
+    context.webdriver.implicitly_wait(context.wait_seconds)
     context.config.setup_logging()
 
 
 def after_all(context):
     """ Executed after all tests """
-    context.driver.quit()
+    context.webdriver.quit()
 
 ######################################################################
 # Utility functions to create web drivers
