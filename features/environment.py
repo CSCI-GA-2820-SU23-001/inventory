@@ -15,7 +15,7 @@ def before_all(context):
     context.wait_seconds = WAIT_SECONDS
     # Select either Chrome or Firefox
     if 'firefox' in DRIVER:
-        context.diver = get_firefox()
+        context.driver = get_firefox()
     else:
         context.driver = get_chrome()
     context.driver.implicitly_wait(context.wait_seconds)
