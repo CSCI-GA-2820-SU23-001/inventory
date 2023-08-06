@@ -66,7 +66,7 @@ $(function () {
         
         let ajax = $.ajax({
             type: "POST",
-            url: "/inventory",
+            url: "/api/inventory",
             contentType: "application/json",
             data: JSON.stringify(data),
         });
@@ -108,7 +108,7 @@ $(function () {
 
         let ajax = $.ajax({
                 type: "PUT",
-                url: `/inventory/${product_id}/${condition}`,
+                url: `/api/inventory/${product_id}/${condition}`,
                 contentType: "application/json",
                 data: JSON.stringify(data)
             })
@@ -137,7 +137,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory/${product_id}/${condition}`,
+            url: `/api/inventory/${product_id}/${condition}`,
             contentType: "application/json",
             data: ''
         })
@@ -167,7 +167,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "DELETE",
-            url: `/inventory/${product_id}/${condition}`,
+            url: `/api/inventory/${product_id}/${condition}`,
             contentType: "application/json",
             data: '',
         })
@@ -201,7 +201,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory/RESTOCK`,
+            url: `/api/inventory/RESTOCK`,
             contentType: "application/json",
             data: ''
         })
@@ -251,7 +251,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory`,
+            url: `/api/inventory`,
             contentType: "application/json",
             data: ''
         })
@@ -301,7 +301,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory/NEW`,
+            url: `/api/inventory/NEW`,
             contentType: "application/json",
             data: ''
         })
@@ -351,7 +351,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory/OPEN_BOX`,
+            url: `/api/inventory/OPEN_BOX`,
             contentType: "application/json",
             data: ''
         })
@@ -402,7 +402,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/inventory/USED`,
+            url: `/api/inventory/USED`,
             contentType: "application/json",
             data: ''
         })
@@ -456,7 +456,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "PUT",
-            url: `/inventory/${product_id}/${condition}/active`,
+            url: `/api/inventory/${product_id}/${condition}/active`,
             contentType: "application/json",
             data: '',
         })
@@ -484,7 +484,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "DELETE",
-            url: `/inventory/${product_id}/${condition}/active`,
+            url: `/api/inventory/${product_id}/${condition}/active`,
             contentType: "application/json",
             data: '',
         })

@@ -29,7 +29,8 @@
 				"rangav.vscode-thunder-client",
 				"ms-azuretools.vscode-docker",
 				"ms-kubernetes-tools.vscode-kubernetes-tools",
-				"bbenoist.vagrant"
+				"bbenoist.vagrant",
+				"ms-python.black-formatter"
 			]		
 		}
 	},
