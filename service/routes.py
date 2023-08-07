@@ -30,7 +30,7 @@ DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record 
 
 from flask import jsonify
 from flask_restx import Resource, fields
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import IntegrityError
 from service.models import Inventory, Condition, UpdateStatusType
 from service.common import status  # HTTP Status Codes
 from service.utilities import check_condition_type
