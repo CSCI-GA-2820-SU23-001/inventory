@@ -7,7 +7,7 @@ from enum import Enum
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError, DataError
-from requests import HTTPError, ConnectionError  # pylint: disable=redefined-builtin
+from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
 import os
 

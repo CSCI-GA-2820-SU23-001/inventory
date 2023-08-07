@@ -3,7 +3,7 @@ Utilities for Inventory API endpoints
 
 """
 
-from flask import request, abort
+from flask import abort
 from service.common import status  # HTTP Status Codes
 from service.models import Condition
 
