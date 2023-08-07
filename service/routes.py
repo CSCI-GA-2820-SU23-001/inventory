@@ -88,6 +88,16 @@ inventory_model = api.inherit(
     },
 )
 
+update_model = api.model(
+    "UpdateModel",
+    {
+        "quantity": fields.Integer(
+            description="The number of copies we have of this item"
+        ),
+        "restock_level": fields.Integer(description="The restock level of this item"),
+    },
+)
+
 
 ######################################################################
 #  PATH: /inventory/{product_id}/{condition}/active
@@ -230,7 +240,7 @@ class InventoryResource(Resource):
     @api.doc("update_inventory")
     @api.response(404, "Inventory not found")
     @api.response(400, "The posted Inventory data was not valid")
-    @api.expect(inventory_model)
+    @api.expect(update_model)
     @api.marshal_with(inventory_model)
     def put(self, product_id, condition):
         """
