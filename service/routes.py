@@ -109,10 +109,9 @@ class InventoryUpdateStatus(Resource):
     @api.doc("enable_item_update")
     @api.response(404, "Inventory not found")
     @api.response(400, "The posted Inventory data was not valid")
-    @api.expect(inventory_model)
     @api.marshal_with(inventory_model)
     def put(self, product_id, condition):
-        """ENABLE UPDATES OF A PRODUCT ID"""
+        """Enable updates of a product ID"""
         app.logger.info(
             "Request to enable updates of product ID %s, condition %s",
             product_id,
@@ -150,10 +149,9 @@ class InventoryUpdateStatus(Resource):
     @api.doc("disable_item_update")
     @api.response(404, "Inventory not found")
     @api.response(400, "The posted Inventory data was not valid")
-    @api.expect(inventory_model)
     @api.marshal_with(inventory_model)
     def delete(self, product_id, condition):
-        """DISABLE UPDATES OF A PRODUCT ID"""
+        """Disable updates of a product ID"""
         app.logger.info(
             "Request to disable updates of product ID %s, condition %s",
             product_id,
@@ -210,7 +208,7 @@ class InventoryResource(Resource):
     def get(self, product_id, condition):
         """
         Retrieve a single Inventory
-        This endpoint will return an Inventory object based on it's id
+        This endpoint will return an Inventory object based on its product ID
         """
         app.logger.info(
             "Request to Retrieve an inventory object with id [%s] and condition [%s]",
@@ -236,7 +234,7 @@ class InventoryResource(Resource):
     def put(self, product_id, condition):
         """
         Update an Inventory object
-        This endpoint will update an Inventory object based the body that is posted
+        This endpoint will update an Inventory object based on the body that is posted
         """
         app.logger.info(
             "Request to Update an inventory object with id [%s] and condition [%s]",
