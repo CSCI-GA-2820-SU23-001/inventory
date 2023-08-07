@@ -11,7 +11,7 @@ from service.common import status
 from tests.factories import InventoryFactory  # HTTP Status Codes
 from tests.parent_models import TestResourceServer
 
-BASE_URL = "/inventory"
+BASE_URL = "/api/inventory"
 
 
 class TestYourResourceServerHealth(TestResourceServer):
@@ -469,7 +469,7 @@ class TestYourResourceServerGet(TestResourceServer):
         self.assertIn("was not found", data["message"])
 
         response = self.client.get(f"{BASE_URL}/0/FINAL")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestYourResourceServerEnableDisableUpdate(TestResourceServer):
