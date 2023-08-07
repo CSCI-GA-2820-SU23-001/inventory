@@ -5,11 +5,11 @@ All of the models are stored in this module
 import logging
 from enum import Enum
 from datetime import datetime
+import os
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError, DataError
 from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
-import os
 
 logger = logging.getLogger("flask.app")
 
@@ -233,10 +233,10 @@ class Inventory(db.Model):
             return cls.query.filter(
                 cls.product_id == by_id, cls.condition == by_condition
             ).first()
-        except DataError as dataError:
+        except DataError as data_error:
             logger.error(
                 "Models.py, DataError in find fn. Msg: %s",
-                dataError.orig.diag.message_detail,
+                data_error.orig.diag.message_detail,
             )
             raise
 

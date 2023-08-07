@@ -30,11 +30,11 @@ DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record 
 
 from flask import jsonify
 from flask_restx import Resource, fields
+from sqlalchemy.exc import IntegrityError, DataError
 from service.models import Inventory, Condition, UpdateStatusType
 from service.common import status  # HTTP Status Codes
-from . import app, api
-from sqlalchemy.exc import IntegrityError, DataError
 from service.utilities import check_condition_type
+from . import app, api
 
 
 ######################################################################
@@ -276,8 +276,9 @@ class InventoryResource(Resource):
                 inventory.restock_level = data["restock_level"]
                 inventory.update()
                 return inventory.serialize(), status.HTTP_200_OK
-            else:
-                abort(
+            # end if
+
+            abort(
                     status.HTTP_400_BAD_REQUEST,
                     f"Product ID {product_id} is currently disabled and cannot be updated",
                 )
@@ -318,9 +319,9 @@ class InventoryResource(Resource):
 ######################################################################
 #  PATH: /inventory/<listFilter>
 ######################################################################
-@api.route("/inventory/<listFilter>")
+@api.route("/inventory/<list_filter>")
 @api.param(
-    "listFilter", "The filter for the type of list (NEW, OPEN_BOX, USED, RESTOCK)"
+    "list_filter", "The filter for the type of list (NEW, OPEN_BOX, USED, RESTOCK)"
 )
 class InventoryListFilter(Resource):
     """Builds a filtered list"""
@@ -330,22 +331,22 @@ class InventoryListFilter(Resource):
     # ------------------------------------------------------------------
     @api.doc("list_inventory_filter")
     @api.marshal_list_with(inventory_model)
-    def get(self, listFilter):
+    def get(self, list_filter):
         """Returns a filtered list"""
-        app.logger.info("Request to list items using listFilter: %s", listFilter)
+        app.logger.info("Request to list items using list_filter: %s", list_filter)
         inventory = []
-        if listFilter.upper() == "NEW":
+        if list_filter.upper() == "NEW":
             inventory = Inventory.find_by_condition(Condition.NEW)
-        elif listFilter.upper() == "OPEN_BOX":
+        elif list_filter.upper() == "OPEN_BOX":
             inventory = Inventory.find_by_condition(Condition.OPEN_BOX)
-        elif listFilter.upper() == "USED":
+        elif list_filter.upper() == "USED":
             inventory = Inventory.find_by_condition(Condition.USED)
-        elif listFilter.upper() == "RESTOCK":
+        elif list_filter.upper() == "RESTOCK":
             inventory = Inventory.find_by_restock()
         else:
             app.logger.info(
-                "routes.py, InventoryListFilter::get error, unknown listFilter type: %s",
-                listFilter,
+                "routes.py, InventoryListFilter::get error, unknown list_filter type: %s",
+                list_filter,
             )
             return "", status.HTTP_400_BAD_REQUEST
         # end switch case
