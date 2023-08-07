@@ -252,15 +252,10 @@ class InventoryResource(Resource):
             product_id,
             condition,
         )
-        try:
-            check_condition_type(condition)
-            inventory = Inventory.find(product_id, condition)
-        except DataError as data_error:
-            app.logger.error(
-                "routes.py, DataError in InventoryResource::put. Msg: %s",
-                data_error.orig.diag.message_detail,
-            )
-            return "", status.HTTP_400_BAD_REQUEST
+
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
+
         # end try/catch
         if not inventory:
             abort(
@@ -279,9 +274,9 @@ class InventoryResource(Resource):
             # end if
 
             abort(
-                    status.HTTP_400_BAD_REQUEST,
-                    f"Product ID {product_id} is currently disabled and cannot be updated",
-                )
+                status.HTTP_400_BAD_REQUEST,
+                f"Product ID {product_id} is currently disabled and cannot be updated",
+            )
         else:
             app.logger.error(
                 "routes.py, InventoryResource::put, neg quantity and restock_levels args"

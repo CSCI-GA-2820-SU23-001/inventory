@@ -229,16 +229,9 @@ class Inventory(db.Model):
             by_id,
             by_condition,
         )
-        try:
-            return cls.query.filter(
-                cls.product_id == by_id, cls.condition == by_condition
-            ).first()
-        except DataError as data_error:
-            logger.error(
-                "Models.py, DataError in find fn. Msg: %s",
-                data_error.orig.diag.message_detail,
-            )
-            raise
+        return cls.query.filter(
+            cls.product_id == by_id, cls.condition == by_condition
+        ).first()
 
     @classmethod
     @retry(
