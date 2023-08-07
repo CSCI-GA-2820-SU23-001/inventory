@@ -215,6 +215,7 @@ class InventoryResource(Resource):
             product_id,
             condition,
         )
+        check_condition_type(condition)
         inventory = Inventory.find(product_id, condition)
         if not inventory:
             abort(
@@ -242,6 +243,7 @@ class InventoryResource(Resource):
             condition,
         )
         try:
+            check_condition_type(condition)
             inventory = Inventory.find(product_id, condition)
         except DataError as data_error:
             app.logger.error(
@@ -295,6 +297,7 @@ class InventoryResource(Resource):
             product_id,
             condition,
         )
+        check_condition_type(condition)
         inventory = Inventory.find(product_id, condition)
         if inventory:
             inventory.delete()
