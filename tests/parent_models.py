@@ -38,6 +38,8 @@ class TestInventoryModel(unittest.TestCase):
 
     def tearDown(self):
         """This runs after each test"""
+        db.session.query(Inventory).delete()  # clean up the test
+        db.session.commit()
         db.session.remove()
 
 
@@ -66,4 +68,6 @@ class TestResourceServer(unittest.TestCase):
 
     def tearDown(self):
         """This runs after each test"""
+        db.session.query(Inventory).delete()  # clean up the test
+        db.session.commit()
         db.session.remove()
