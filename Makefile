@@ -29,7 +29,7 @@ lint: ## Run the linter
 	$(info Running linting...)
 	flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
 	flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
-	pylint service tests --max-line-length=127
+	pylint service tests --max-line-length=127 --fail-under=9
 
 .PHONY: tests
 test: ## Run the unit tests

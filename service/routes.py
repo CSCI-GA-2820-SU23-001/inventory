@@ -1,36 +1,50 @@
+######################################################################
+# Copyright 2016, 2022 John J. Rofrano. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+######################################################################
+# spell: ignore Rofrano jsonify restx dbname
 """
-Inventory Service
-
-List, Create, Read, Update, and Delete products from the inventory database
+Inventory Store Service with Swagger
+Paths:
+------
+GET / - Displays a UI for Selenium testing
+GET /inventory - Returns a list all of the Inventories
+GET /inventory/{product_id}/{condition} - Returns the Inventory with a given id number
+POST /inventory - Creates a new Inventory record in the database
+PUT /inventory/{product_id}/{condition} - Updates an Inventory object record in the database
+PUT /inventory/{product_id}/{condition}/active - Change an item's update status to enabled
+DELETE /inventory/{product_id}/{condition/active - Change an item's update status to disabled
+DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record in the database
 """
-# Standard library imports
-from enum import Enum
 
-# Third-party imports
-
-from flask import jsonify, request, abort
+from flask import jsonify
+from flask_restx import Resource, fields
 from sqlalchemy.exc import IntegrityError
-
-# Local imports
 from service.models import Inventory, Condition, UpdateStatusType
 from service.common import status  # HTTP Status Codes
-from service.utilities import check_content_type, check_condition_type
-
-# Import Flask application
-from . import app
+from service.utilities import check_condition_type
+from . import app, api
 
 
-class FilterType(Enum):
-    """Enumeration of filter types"""
+######################################################################
+# Configure the Root route before OpenAPI
+######################################################################
+@app.route("/")
+def index():
+    """Index page"""
+    return app.send_static_file("index.html")
 
-    CONDITION = (0,)
-    RESTOCK = (1,)
-
-    # This is the last value in the enum and is meant to be a default value. Nothing should come after this
-    NONE = 2
-
-
-# end enum FilterType
 
 ############################################################
 # Health Endpoint
@@ -38,418 +52,374 @@ class FilterType(Enum):
 @app.route("/health")
 def health():
     """Health Status"""
-    return {"status": 'OK'}, status.HTTP_200_OK
+    return {"status": "OK"}, status.HTTP_200_OK
 
 
-######################################################################
-# GET INDEX
-######################################################################
-@app.route("/")
-def index():
-    """Root URL response"""
-    return app.send_static_file("index.html")
-
-
-######################################################################
-#  R E S T   A P I   E N D P O I N T S
-######################################################################
-
-
-######################################################################
-# ENABLE UPDATES OF A PRODUCT ID
-######################################################################
-@app.route(
-    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["PUT"]
-)
-def enable_product_id(_product_id, _condition):
-    """ENABLE UPDATES OF A PRODUCT ID"""
-    app.logger.info(
-        "Request to enable updates of product ID %s, condition %s",
-        _product_id,
-        _condition,
-    )
-
-    check_condition_type(_condition)
-    inventory = Inventory.find(_product_id, _condition)
-    if inventory is None:
-        app.logger.error(
-            "Tuple (%s, %s) does not exist in database", _product_id, _condition
-        )
-        abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
-    # check_condition_type already verified that condition is a valid enum value
-    else:
-        inventory.can_update = UpdateStatusType.ENABLED
-        inventory.update()
-
-        app.logger.info(
-            "Successfully enabled updates of product ID %s, condition %s",
-            _product_id,
-            _condition,
-        )
-
-        return (
-            jsonify(
-                "Successfully enabled updates of product ID "
-                + _product_id
-                + " with condition "
-                + _condition
-            ),
-            status.HTTP_200_OK,
-        )
-
-    # end if/else
-
-
-# end func enable_product_id
-
-
-######################################################################
-# DISABLE UPDATES OF A PRODUCT ID
-######################################################################
-@app.route(
-    "/inventory/<string:_product_id>/<string:_condition>/active", methods=["DELETE"]
-)
-def disable_product_id(_product_id, _condition):
-    """DISABLE UPDATES OF A PRODUCT ID"""
-    app.logger.info(
-        "Request to disable updates of product ID %s, condition %s",
-        _product_id,
-        _condition,
-    )
-
-    check_condition_type(_condition)
-    inventory = Inventory.find(_product_id, _condition)
-    if inventory is None:
-        app.logger.info(
-            "Tuple (%s, %s) does not exist in database", _product_id, _condition
-        )
-        return jsonify("Invalid argument specified"), status.HTTP_204_NO_CONTENT
-    # check_condition_type already verified that condition is a valid enum value
-    # end if
-
-    inventory.can_update = UpdateStatusType.DISABLED
-    inventory.update()
-
-    app.logger.info(
-        "Successfully disabled updates of product ID %s, condition %s",
-        _product_id,
-        _condition,
-    )
-
-    return (
-        jsonify(
-            "Successfully disabled updates of product ID "
-            + _product_id
-            + " with condition "
-            + _condition
+# Define the model so that the docs reflect what can be sent
+create_model = api.model(
+    "Inventory",
+    {
+        "product_id": fields.Integer(
+            required=True, description="The product ID of the Inventory"
         ),
-        status.HTTP_204_NO_CONTENT,
-    )
+        "condition": fields.String(
+            required=True,
+            enum=Condition._member_names_,
+            description="The condition of the item (i.e., NEW, OPEN_BOX, USED)",
+        ),
+        "quantity": fields.Integer(
+            description="The number of copies we have of this item"
+        ),
+        "restock_level": fields.Integer(description="The restock level of this item"),
+        "last_updated_on": fields.Date(description="The day the item was created"),
+        "can_update": fields.String(
+            enum=UpdateStatusType._member_names_,
+            description="The update status (ENABLED, DISABLED) of the item",
+        ),
+    },
+)
+inventory_model = api.inherit(
+    "InventoryModel",
+    create_model,
+    {
+        "id": fields.String(
+            readOnly=True, description="The unique id assigned internally by service"
+        ),
+    },
+)
 
-
-# end func disable_product_id
+update_model = api.model(
+    "UpdateModel",
+    {
+        "quantity": fields.Integer(
+            description="The number of copies we have of this item"
+        ),
+        "restock_level": fields.Integer(description="The restock level of this item"),
+    },
+)
 
 
 ######################################################################
-# DELETE A INVENTORY ITEM
+#  PATH: /inventory/{product_id}/{condition}/active
 ######################################################################
-@app.route("/inventory/<int:product_id>/<string:condition>", methods=["DELETE"])
-def delete_inventory(product_id, condition):
-    """This endpoint will delete a product with the specified id and condition"""
-    app.logger.info(
-        "Request to delete a product with product_id %s and condition %s",
-        product_id,
-        condition,
-    )
-    product = Inventory.find(by_id=product_id, by_condition=condition)
-    if product:
-        product.delete()
+@api.route("/inventory/<product_id>/<condition>/active")
+@api.param("product_id", "The product ID")
+@api.param("condition", "The condition")
+class InventoryUpdateStatus(Resource):
+    """
+    InventoryUpdateStatus class
+    Allows the manipulation of a single item's update status
+    PUT /inventory/{product_id}/{condition}/active - Enable the item's update status; you can now update the item
+    DELETE /inventory/{product_id}/{condition}/active - Disable the item's update status; you can no longer update the item
+    """
+
+    # ------------------------------------------------------------------
+    # ENABLE ITEM UPDATES
+    # ------------------------------------------------------------------
+    @api.doc("enable_item_update")
+    @api.response(404, "Inventory not found")
+    @api.response(400, "The posted Inventory data was not valid")
+    @api.marshal_with(inventory_model)
+    def put(self, product_id, condition):
+        """Enable updates of a product ID"""
         app.logger.info(
-            "Product with product_id %s and condition %s deleted.",
+            "Request to enable updates of product ID %s, condition %s",
+            product_id,
+            condition,
+        )
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
+        if inventory is None:
+            app.logger.error(
+                "Tuple (%s, %s) does not exist in database", product_id, condition
+            )
+            abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
+        # check_condition_type already verified that condition is a valid enum value
+        else:
+            inventory.can_update = UpdateStatusType.ENABLED
+            inventory.update()
+            app.logger.info(
+                "Successfully enabled updates of product ID %s, condition %s",
+                product_id,
+                condition,
+            )
+            return (
+                jsonify(
+                    "Successfully enabled updates of product ID "
+                    + product_id
+                    + " with condition "
+                    + condition
+                ),
+                status.HTTP_200_OK,
+            )
+
+    # ------------------------------------------------------------------
+    # DISABLE ITEM UPDATES
+    # ------------------------------------------------------------------
+    @api.doc("disable_item_update")
+    @api.response(404, "Inventory not found")
+    @api.response(400, "The posted Inventory data was not valid")
+    @api.marshal_with(inventory_model)
+    def delete(self, product_id, condition):
+        """Disable updates of a product ID"""
+        app.logger.info(
+            "Request to disable updates of product ID %s, condition %s",
+            product_id,
+            condition,
+        )
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
+        if inventory is None:
+            app.logger.error(
+                "Tuple (%s, %s) does not exist in database", product_id, condition
+            )
+            abort(status.HTTP_404_NOT_FOUND, "Invalid argument specified")
+        # check_condition_type already verified that condition is a valid enum value
+        else:
+            inventory.can_update = UpdateStatusType.DISABLED
+            inventory.update()
+            app.logger.info(
+                "Successfully disabled updates of product ID %s, condition %s",
+                product_id,
+                condition,
+            )
+            return (
+                jsonify(
+                    "Successfully disabled updates of product ID "
+                    + product_id
+                    + " with condition "
+                    + condition
+                ),
+                status.HTTP_204_NO_CONTENT,
+            )
+
+
+######################################################################
+#  PATH: /inventory/{product_id}/{condition}
+######################################################################
+@api.route("/inventory/<product_id>/<condition>")
+@api.param("product_id", "The product ID")
+@api.param("condition", "The condition")
+class InventoryResource(Resource):
+    """
+    InventoryResource class
+    Allows the manipulation of a single Inventory
+    GET /inventory/{product_id}/{condition} - Returns an Inventory object with the id and condition
+    PUT /inventory/{product_id}/{condition} - Update an Inventory object with the id and condition
+    DELETE /inventory/{product_id}/{condition} -  Deletes an Inventory object with the id and condition
+    """
+
+    # ------------------------------------------------------------------
+    # RETRIEVE AN INVENTORY OBJECT
+    # ------------------------------------------------------------------
+    @api.doc("get_inventory")
+    @api.response(404, "Inventory not found")
+    @api.marshal_with(inventory_model)
+    def get(self, product_id, condition):
+        """
+        Retrieve a single Inventory
+        This endpoint will return an Inventory object based on its product ID
+        """
+        app.logger.info(
+            "Request to Retrieve an inventory object with id [%s] and condition [%s]",
+            product_id,
+            condition,
+        )
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
+        if not inventory:
+            abort(
+                status.HTTP_404_NOT_FOUND,
+                f"Inventory with id '{product_id}' and condition '{condition}' was not found.",
+            )
+        return inventory.serialize(), status.HTTP_200_OK
+
+    # ------------------------------------------------------------------
+    # UPDATE AN EXISTING INVENTORY
+    # ------------------------------------------------------------------
+    @api.doc("update_inventory")
+    @api.response(404, "Inventory not found")
+    @api.response(400, "The posted Inventory data was not valid")
+    @api.expect(update_model)
+    @api.marshal_with(inventory_model)
+    def put(self, product_id, condition):
+        """
+        Update an Inventory object
+        This endpoint will update an Inventory object based on the body that is posted
+        """
+        app.logger.info(
+            "Request to Update an inventory object with id [%s] and condition [%s]",
             product_id,
             condition,
         )
 
-    return ("", status.HTTP_204_NO_CONTENT)
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
 
-
-######################################################################
-# ADD A NEW INVENTORY ITEM
-######################################################################
-@app.route("/inventory", methods=["POST"])
-def create_inventory():
-    """
-    Creates an inventory listing for the product
-    This endpoint will create an Inventory listing based on the data in the body that is posted
-    """
-    app.logger.info("Request to create an inventory item")
-    check_content_type("application/json")
-    inventory = Inventory()
-    inventory.deserialize(request.get_json())
-    message = ""
-    status_code = status.HTTP_400_BAD_REQUEST
-    try:
-        inventory.create()
-        message = inventory.serialize()
-        status_code = status.HTTP_201_CREATED
-        app.logger.info(
-            "Inventory for product with ID [%s] and condition [%s] created with can_update status set to ENABLED.",
-            inventory.product_id,
-            inventory.condition,
-        )
-
-    except IntegrityError:
-        message = f"Primary key conflict: <{inventory.product_id}, {inventory.condition}> key pair already exists in database"
-        status_code = status.HTTP_409_CONFLICT
-        app.logger.info(
-            "Inventory for product with ID [%s] and condition [%s] already exists."
-        )
-
-    return jsonify(message), status_code
-
-
-######################################################################
-# UPDATE AN INVENTORY ITEM
-######################################################################
-@app.route("/inventory/<int:product_id>/<string:condition>", methods=["PUT"])
-def update_inventory(product_id, condition):
-    """
-    Updates an inventory listing for the specified product and condition
-    This endpoint will update the inventory listing for the specified product and condition
-    based on the data in the body that is sent in the request
-    """
-    app.logger.info(
-        "Request to update inventory for product with ID [%s] and condition [%s]",
-        product_id,
-        condition,
-    )
-    check_content_type("application/json")
-    check_condition_type(condition)
-    inventory = Inventory.find(product_id, condition)
-    if inventory is None:
-        abort(
-            status.HTTP_404_NOT_FOUND,
-            f"Inventory not found for product with ID {product_id} and condition {condition}",
-        )
-    # check_condition_type already verified that condition is a valid enum value
-    elif inventory.can_update == UpdateStatusType.DISABLED:
-        abort(
-            status.HTTP_400_BAD_REQUEST,
-            f"Product ID {product_id} is currently disabled and cannot be updated",
-        )
-    # end if/else block
-
-    update_json = request.get_json()
-    quantity = update_json["quantity"]
-    restock_level = update_json["restock_level"]
-
-    if quantity < 0:
-        abort(
-            status.HTTP_400_BAD_REQUEST,
-            "Quantity to be updated must be higher or equal to 0.",
-        )
-    if restock_level < 0:
-        abort(
-            status.HTTP_400_BAD_REQUEST,
-            "Restock level to be updated must be higher or equal to 0.",
-        )
-
-    message = ""
-    inventory.quantity = quantity
-    inventory.restock_level = restock_level
-    inventory.update()
-    message = inventory.serialize()
-    status_code = status.HTTP_200_OK
-    app.logger.info(
-        "Inventory for product with ID [%s] and condition [%s] updated.",
-        inventory.product_id,
-        inventory.condition,
-    )
-
-    return jsonify(message), status_code
-
-
-######################################################################
-# CREATE A LIST OF ITEMS
-######################################################################
-def build_inventory_list(_input_filter_type: FilterType, _condition: Condition):
-    """
-    Create a list of items
-    """
-    my_list = []
-    index_number = 0
-    for entry in Inventory().all():
-        # To avoid duplicating code, list_all_items and list_items_criteria will both call this method
-        # to build their lists. In list_all_items, we don't care about filtering on any criteria;
-        # _input_filter_type will be NONE and _condition can be set to any value in the enum as it'll be ignored anyway
-        #
-        # In list_items_criteria, we do care about filtering on a specified criteria:
-        #
-        # 1. if _input_filter_type is of type CONDITION and the entry's condition matches _condition, add it to the list
-        # 2. if _input_filter_type is of type RESTOCK, and _condition is FINAL (we don't care about condition), and
-        # the entry's quantity is strictly less than its restock_level, then add it to the list
-        if should_process_entry(_input_filter_type, _condition, entry):
-            my_list.append(
-                {
-                    "product_id": entry.product_id,
-                    "condition": entry.condition.name,
-                    "quantity": entry.quantity,
-                    "restock_level": entry.restock_level,
-                    # twong, code crashes here if you do not convert entry.last_update_on to a string
-                    # json cannot serialize DateTime objects
-                    "last_updated_on": str(entry.last_updated_on),
-                    "can_update": entry.can_update.name,
-                }
+        # end try/catch
+        if not inventory:
+            abort(
+                status.HTTP_404_NOT_FOUND,
+                f"Inventory with id '{product_id}' was not found.",
             )
-
-            # Write the current entry's info to the log
-            app.logger.info(
-                "------------------------------------------------------------------"
-            )
-            app.logger.info("Index : %d", index_number)
-            app.logger.info("product_id : %d", entry.product_id)
-            app.logger.info("condition : %s", entry.condition.name)
-            app.logger.info("quantity : %d", entry.quantity)
-            app.logger.info("restock_level : %d", entry.restock_level)
-            app.logger.info("last_updated_on : %s", str(entry.last_updated_on))
-            app.logger.info("can_update : %s", entry.can_update.name)
-            app.logger.info(
-                "------------------------------------------------------------------"
-            )
-            index_number += 1
         # end if
+        app.logger.debug("Payload = %s", api.payload)
+        data = api.payload
+        if data["quantity"] > 0 and data["restock_level"] > 0:
+            if inventory.can_update == UpdateStatusType.ENABLED:
+                inventory.quantity = data["quantity"]
+                inventory.restock_level = data["restock_level"]
+                inventory.update()
+                return inventory.serialize(), status.HTTP_200_OK
+            # end if
+
+            abort(
+                status.HTTP_400_BAD_REQUEST,
+                f"Product ID {product_id} is currently disabled and cannot be updated",
+            )
+        else:
+            app.logger.error(
+                "routes.py, InventoryResource::put, neg quantity and restock_levels args"
+            )
+            app.logger.error(
+                "quantity: %d, restock_level: %d",
+                data["quantity"],
+                data["restock_level"],
+            )
+            return "", status.HTTP_400_BAD_REQUEST
+
+    # ------------------------------------------------------------------
+    # DELETE AN INVENTORY OBJECT
+    # ------------------------------------------------------------------
+    @api.doc("delete_inventory")
+    @api.response(204, "Inventory deleted")
+    def delete(self, product_id, condition):
+        """
+        Delete an Inventory object
+        This endpoint will delete an Inventory object based the id specified in the path
+        """
+        app.logger.info(
+            "Request to Delete an inventory object with id [%s] and condition [%s]",
+            product_id,
+            condition,
+        )
+        check_condition_type(condition)
+        inventory = Inventory.find(product_id, condition)
+        if inventory:
+            inventory.delete()
+            app.logger.info("Inventory with id [%s] was deleted", product_id)
+        return "", status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+#  PATH: /inventory/<listFilter>
+######################################################################
+@api.route("/inventory/<list_filter>")
+@api.param(
+    "list_filter", "The filter for the type of list (NEW, OPEN_BOX, USED, RESTOCK)"
+)
+class InventoryListFilter(Resource):
+    """Builds a filtered list"""
+
+    # ------------------------------------------------------------------
+    # LIST INVENTORIES BASED ON CONDITION OR RESTOCK
+    # ------------------------------------------------------------------
+    @api.doc("list_inventory_filter")
+    @api.marshal_list_with(inventory_model)
+    def get(self, list_filter):
+        """Returns a filtered list"""
+        app.logger.info("Request to list items using list_filter: %s", list_filter)
+        inventory = []
+        if list_filter.upper() == "NEW":
+            inventory = Inventory.find_by_condition(Condition.NEW)
+        elif list_filter.upper() == "OPEN_BOX":
+            inventory = Inventory.find_by_condition(Condition.OPEN_BOX)
+        elif list_filter.upper() == "USED":
+            inventory = Inventory.find_by_condition(Condition.USED)
+        elif list_filter.upper() == "RESTOCK":
+            inventory = Inventory.find_by_restock()
         else:
             app.logger.info(
-                "Ignoring arguments where _input_filter_type is %s and condition is %s",
-                _input_filter_type,
-                _condition,
+                "routes.py, InventoryListFilter::get error, unknown list_filter type: %s",
+                list_filter,
             )
-        # end block
-    # end for
+            return "", status.HTTP_400_BAD_REQUEST
+        # end switch case
+        app.logger.info("[%s] Inventories returned", inventory.count())
+        results = [inventory.serialize() for inventory in inventory]
+        return results, status.HTTP_200_OK
 
-    return my_list
 
+######################################################################
+#  PATH: /inventory
+######################################################################
+@api.route("/inventory", strict_slashes=False)
+class InventoryCollection(Resource):
+    """Handles all interactions with collections of Inventories"""
 
-# end func build_inventory_list
+    # ------------------------------------------------------------------
+    # LIST ALL INVENTORIES
+    # ------------------------------------------------------------------
+    @api.doc("list_inventory")
+    @api.marshal_list_with(inventory_model)
+    def get(self):
+        """Returns all of the Inventories"""
+        app.logger.info("Request to list ALL Inventories...")
+        inventory = Inventory.all()
+        app.logger.info("[%s] Inventories returned", len(inventory))
+        results = [inventory.serialize() for inventory in inventory]
+        return results, status.HTTP_200_OK
 
-def should_process_entry(_input_filter_type, _condition, entry):
-    """
-    Check the condition for build_inventory_list()
-    """
-    return (
-        (_input_filter_type == FilterType.NONE and _condition == Condition.FINAL)
-        or (_input_filter_type == FilterType.CONDITION and entry.condition == _condition)
-        or (
-            _input_filter_type == FilterType.RESTOCK
-            and _condition == Condition.FINAL
-            and entry.quantity < entry.restock_level
+    # ------------------------------------------------------------------
+    # ADD A NEW INVENTORY
+    # ------------------------------------------------------------------
+    @api.doc("create_inventory")
+    @api.response(400, "The posted data was not valid")
+    @api.expect(create_model)
+    @api.marshal_with(inventory_model, code=201)
+    def post(self):
+        """
+        Creates an Inventory object
+        This endpoint will create an Inventory object based the data in the body that is posted
+        """
+        app.logger.info("Request to Create an Inventory object")
+        inventory = Inventory()
+        app.logger.debug("Payload = %s", api.payload)
+        inventory.deserialize(api.payload)
+        try:
+            inventory.create()
+        except IntegrityError as error:
+            # It was most likely a 409 conflict, which is what we will return. But log the error message
+            # anyway for more info
+            app.logger.error(
+                "routes.py, InventoryCollection::post, an error occurred: %s",
+                error.orig.diag.message_detail,
+            )
+            return "", status.HTTP_409_CONFLICT
+        # end try/catch block
+        app.logger.info("Inventory with new id [%s] created!", inventory.product_id)
+        location_url = api.url_for(
+            InventoryResource,
+            product_id=inventory.product_id,
+            condition=inventory.condition,
+            _external=True,
         )
-    )
-
-
-######################################################################
-# RETURN ALL ITEMS IN THE INVENTORY REGARDLESS OF CONDITION
-######################################################################
-@app.route("/inventory", methods=["GET"])
-def list_all_items():
-    """
-    List all items.
-    """
-    app.logger.info("Request to list ALL items in the inventory...")
-
-    # This function is expected to always return a status code of 200, unless the server is down
-    # If there's nothing in the warehouse, the returned list will be empty. See build_inventory_list
-    # for an explanation of the arguments being passed into it
-    ret_list = build_inventory_list(FilterType.NONE, Condition.FINAL)
-    app.logger.info("There are %d items in the inventory", len(ret_list))
-    return jsonify(ret_list), status.HTTP_200_OK
-
-
-# end func list_all_items
-
-
-######################################################################
-# RETURN ALL ITEMS IN THE INVENTORY BASED ON A CRITERIA, WHERE CRITERIA
-# IS:
-#
-# 1. CONDITION (NEW, OPEN_BOX, USED) OR
-# 2. RESTOCK
-######################################################################
-@app.route("/inventory/<_criteria>", methods=["GET"])
-def list_items_criteria(_criteria: str):
-    """
-    List items that meet the criteria.
-    """
-    app.logger.info(
-        "Request to list inventory items under a specific criteria: %s", _criteria
-    )
-
-    ret_list = []
-    match _criteria.upper():
-        case "NEW":
-            # See build_inventory_list for an explanation of the arguments being passed into it
-            ret_list = build_inventory_list(FilterType.CONDITION, Condition.NEW)
-        case "OPEN_BOX":
-            ret_list = build_inventory_list(FilterType.CONDITION, Condition.OPEN_BOX)
-        case "USED":
-            ret_list = build_inventory_list(FilterType.CONDITION, Condition.USED)
-        case "RESTOCK":
-            ret_list = build_inventory_list(FilterType.RESTOCK, Condition.FINAL)
-        case _:
-            # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above
-            return (
-                "Unknown argument " + _criteria + " passed into URL",
-                status.HTTP_400_BAD_REQUEST,
-            )
-    # end switch
-
-    app.logger.info(
-        "There are %d items in the inventory under criteria %s",
-        len(ret_list),
-        _criteria,
-    )
-    return jsonify(ret_list), status.HTTP_200_OK
-
-
-# end func list_items_criteria
-
-
-######################################################################
-# RETRIEVE AN INVENTORY
-######################################################################
-@app.route("/inventory/<int:product_id>/<condition>", methods=["GET"])
-def get_inventories(product_id, condition):
-    """
-    Retrieve a single inventory
-
-    This endpoint will return an Inventory based on the product id and condition
-    """
-    app.logger.info(
-        "Request for inventory with id: %s and condition %s", product_id, condition
-    )
-    my_cond = Condition.FINAL
-    match condition.upper():
-        case "NEW":
-            my_cond = Condition.NEW
-        case "OPEN_BOX":
-            my_cond = Condition.OPEN_BOX
-        case "USED":
-            my_cond = Condition.USED
-        case _:
-            # Default case, return HTTP 400 if the user passed in a string that isn't any of the ones above?
-            return (
-                "Unknown argument " + condition + " passed into URL",
-                status.HTTP_400_BAD_REQUEST,
-            )
-    # end switch
-    inventory = Inventory.find(product_id, my_cond)
-    if not inventory:
-        abort(
-            status.HTTP_404_NOT_FOUND,
-            f"Inventory with id '{product_id}' and condition '{condition}' was not found.",
+        return (
+            inventory.serialize(),
+            status.HTTP_201_CREATED,
+            {"Location": location_url},
         )
 
-    app.logger.info(
-        "Returning inventory: %s, %s", inventory.product_id, inventory.condition
-    )
-    return jsonify(inventory.serialize()), status.HTTP_200_OK
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+def abort(error_code: int, message: str):
+    """Logs errors before aborting"""
+    app.logger.error(message)
+    api.abort(error_code, message)
+
+
+def init_db(dbname="inventory"):
+    """Initialize the model"""
+    Inventory.init_db(dbname)

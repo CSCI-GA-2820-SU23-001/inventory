@@ -11,11 +11,12 @@ from service.common import status
 from tests.factories import InventoryFactory  # HTTP Status Codes
 from tests.parent_models import TestResourceServer
 
-BASE_URL = "/inventory"
+BASE_URL = "/api/inventory"
 
 
 class TestYourResourceServerHealth(TestResourceServer):
     """Test Cases for Inventory Resource Server Health"""
+
     def test_health(self):
         """It should call the health endpoint"""
         resp = self.client.get("/health")
@@ -24,6 +25,7 @@ class TestYourResourceServerHealth(TestResourceServer):
 
 class TestYourResourceServerIndex(TestResourceServer):
     """Test Cases for Inventory Resource Server Index"""
+
     def test_index(self):
         """It should call the home page"""
         resp = self.client.get("/")
@@ -32,6 +34,7 @@ class TestYourResourceServerIndex(TestResourceServer):
 
 class TestYourResourceServerDelete(TestResourceServer):
     """Test Cases for Inventory Resource Server Delete"""
+
     def _create_product_id(self):
         """Factory method to create products in bulk"""
         test_product_id = InventoryFactory()
@@ -65,6 +68,7 @@ class TestYourResourceServerDelete(TestResourceServer):
 
 class TestYourResourceServerList(TestResourceServer):
     """Test Cases for Inventory Resource Server List"""
+
     def test_list_all_items(self):
         """It should list all of the items in the inventory"""
         # Test the list_all_items function in routes.py
@@ -262,6 +266,7 @@ class TestYourResourceServerList(TestResourceServer):
 
 class TestYourResourceServerCreate(TestResourceServer):
     """Test Cases for Inventory Resource Server Create"""
+
     def test_create_inventory_success(self):
         """It should Create a new Inventory item"""
         test_inventory = InventoryFactory()
@@ -322,9 +327,10 @@ class TestYourResourceServerCreate(TestResourceServer):
 
 class TestYourResourceServerUpdate(TestResourceServer):
     """Test Cases for Inventory Resource Server Update"""
+
     def test_update_normally(self):
         """Update normally"""
-        test_inventory = InventoryFactory(condition=Condition.NEW)
+        test_inventory = InventoryFactory(product_id=1, condition=Condition.NEW)
         self.client.post(BASE_URL, json=test_inventory.serialize())
         update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW"
         update_quantity = test_inventory.quantity + 2
@@ -349,7 +355,7 @@ class TestYourResourceServerUpdate(TestResourceServer):
 
     def test_update_negative_quantity(self):
         """Update a negative quantity, should report a 400 error"""
-        test_inventory = InventoryFactory(condition=Condition.NEW)
+        test_inventory = InventoryFactory(product_id=1, condition=Condition.NEW)
         self.client.post(BASE_URL, json=test_inventory.serialize())
         update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW"
         update_quantity = -1
@@ -362,7 +368,7 @@ class TestYourResourceServerUpdate(TestResourceServer):
 
     def test_update_negative_restock_level(self):
         """Update a negative restock level, should report a 400 error"""
-        test_inventory = InventoryFactory(condition=Condition.NEW)
+        test_inventory = InventoryFactory(product_id=1, condition=Condition.NEW)
         self.client.post(BASE_URL, json=test_inventory.serialize())
         update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/NEW"
         update_quantity = test_inventory.quantity + 2
@@ -377,7 +383,7 @@ class TestYourResourceServerUpdate(TestResourceServer):
         """Run test_update_using_non_condition_value method"""
         # Update an inventory by specifying a string which is not a part of Condition class
         # should be handled by check_condition_type function and report a 400 error"""
-        test_inventory = InventoryFactory(condition=Condition.NEW)
+        test_inventory = InventoryFactory(product_id=1, condition=Condition.NEW)
         self.client.post(BASE_URL, json=test_inventory.serialize())
         update_url = BASE_URL + "/" + str(test_inventory.product_id) + "/EEEE"
         update_quantity = test_inventory.quantity + 2
@@ -391,6 +397,7 @@ class TestYourResourceServerUpdate(TestResourceServer):
 
 class TestYourResourceServerGet(TestResourceServer):
     """Test Cases for Inventory Resource Server Get"""
+
     def test_get_inventory(self):
         """It should Get a single inventory"""
         # get the id of a inventory
@@ -462,11 +469,12 @@ class TestYourResourceServerGet(TestResourceServer):
         self.assertIn("was not found", data["message"])
 
         response = self.client.get(f"{BASE_URL}/0/FINAL")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestYourResourceServerEnableDisableUpdate(TestResourceServer):
     """Test Cases for Inventory Resource Server Enable and Disable Update"""
+
     def test_enable_disable_update_action(self):
         """Test the functionality of the enable/disable update action"""
 
@@ -537,6 +545,7 @@ class TestYourResourceServerEnableDisableUpdate(TestResourceServer):
 
         # Success
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     # end func test_update_inventory_after_disable
 
     def test_enable_disable_update_action_error_handler(self):
@@ -556,17 +565,12 @@ class TestYourResourceServerEnableDisableUpdate(TestResourceServer):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Try disabling updates to product ID 3 (doesn't exist)
-        response = self.client.delete(
-            BASE_URL + "/3/NEW/active"
-        )
+        response = self.client.delete(BASE_URL + "/3/NEW/active")
 
-        # Regardless, HTTP_204_NO_CONTENT is returned
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Try enabling updates to product ID 4 (doesn't exist)
-        response = self.client.put(
-            BASE_URL + "/4/USED/active"
-        )
+        response = self.client.put(BASE_URL + "/4/USED/active")
 
         # Error
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

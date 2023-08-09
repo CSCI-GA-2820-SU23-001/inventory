@@ -1,18 +1,25 @@
 """
 Models for Inventory
-
 All of the models are stored in this module
 """
 import logging
 from enum import Enum
 from datetime import datetime
+import os
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
+from requests import HTTPError  # pylint: disable=redefined-builtin
+from retry import retry
 
 logger = logging.getLogger("flask.app")
 
 # Create the SQLAlchemy object to be initialized later in init_db()
 db = SQLAlchemy()
+
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 10))
+RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
+RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 
 
 # Function to initialize the database
@@ -31,34 +38,27 @@ class Condition(Enum):
     NEW = 1
     OPEN_BOX = 2
     USED = 3
-
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     FINAL = 4
 
 
 # end enum Condition
-
-
 class UpdateStatusType(Enum):
     """Enumeration of update status types"""
 
     DISABLED = (0,)
     ENABLED = (1,)
-
     # This is the last value in the enum and is meant to be a default value. Nothing should come after this
     UNKNOWN = 2
 
 
 # end enum UpdateStatusType
-
-
 class Inventory(db.Model):
     """
     Class that represents a Inventory
     """
 
     app = None
-
     # Table Schema
     product_id = db.Column(db.Integer, primary_key=True)
     condition = db.Column(
@@ -78,6 +78,13 @@ class Inventory(db.Model):
             f"<Inventory product_id=[{self.product_id}] condition=[{self.condition}]>"
         )
 
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def create(self):
         """
         Creates a Inventory to the database
@@ -86,12 +93,23 @@ class Inventory(db.Model):
         db.session.add(self)
         try:
             db.session.commit()
-        except IntegrityError:
+        except IntegrityError as error:
+            logger.error(
+                "Inventory model create, an error occurred: %s",
+                error.orig.diag.message_detail,
+            )
             # error, there already is a user using this bank address or other
             # constraint failed
             db.session.rollback()
             raise
 
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def update(self):
         """
         Updates a Inventory to the database
@@ -105,10 +123,16 @@ class Inventory(db.Model):
             raise DataValidationError("Update called with empty ID field")
         if not self.condition:
             raise DataValidationError("Update called with empty Condition field")
-
         # Commit the changes
         db.session.commit()
 
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def delete(self):
         """Removes a Inventory from the data store"""
         logger.info(
@@ -133,7 +157,6 @@ class Inventory(db.Model):
     def deserialize(self, data: dict):
         """
         Deserializes a Inventory from a dictionary
-
         Args:
             data (dict): A dictionary containing the resource data
         """
@@ -179,12 +202,26 @@ class Inventory(db.Model):
         db.create_all()  # make our sqlalchemy tables
 
     @classmethod
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def all(cls):
         """Returns all of the Inventories in the database"""
         logger.info("Processing all Inventories")
         return cls.query.all()
 
     @classmethod
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def find(cls, by_id, by_condition):
         """Finds a Inventory by it's ID and condition"""
         logger.info(
@@ -197,15 +234,19 @@ class Inventory(db.Model):
         ).first()
 
     @classmethod
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def find_or_404(cls, product_id: int, condition: Condition):
         """Find an Inventory by it's product product_id and condition
-
         :param product_id: the id of the Product to find
         :type condition: Condition
-
         :return: an instance with the Inventory, or 404_NOT_FOUND if not found
         :rtype: Inventory
-
         """
         logger.info(
             "Processing lookup or 404 for product_id %s, condition %s",
@@ -215,15 +256,36 @@ class Inventory(db.Model):
         return cls.query.get_or_404((product_id, condition))
 
     @classmethod
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
     def find_by_condition(cls, condition: Condition) -> list:
         """Returns all inventories by their condition
-
         :param condition: values are ['NEW', 'OPEN_BOX', 'USED']
         :type available: enum
-
         :return: a collection of inventories that are available
         :rtype: list
-
         """
         logger.info("Processing condition query for %s ...", condition.name)
         return cls.query.filter(cls.condition == condition)
+
+    @classmethod
+    @retry(
+        HTTPError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
+    def find_by_restock(cls) -> list:
+        """Returns all items that need to be restocked
+        An item needs to be restocked if quantity < restock_level
+        :return: a collection of inventories that need to be restocked
+        :rtype: list
+        """
+        logger.info("Returning items that need to be restocked")
+        return cls.query.filter(cls.quantity < cls.restock_level)
