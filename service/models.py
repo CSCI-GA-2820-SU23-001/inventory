@@ -162,20 +162,22 @@ class Inventory(db.Model):
         """
         try:
             self.product_id = data["product_id"]
+            if self.product_id <= 0:
+                raise DataValidationError("data[product_id] is <= 0")
             self.condition = getattr(Condition, data["condition"])
             self.can_update = getattr(UpdateStatusType, data["can_update"])
-            if isinstance(data["quantity"], int):
+            if isinstance(data["quantity"], int) and data["quantity"] >= 1:
                 self.quantity = data["quantity"]
             else:
                 raise DataValidationError(
-                    "Invalid type for integer [quantity]: "
+                    "Invalid type or value for integer [quantity]: "
                     + str(type(data["quantity"]))
                 )
-            if isinstance(data["restock_level"], int):
+            if isinstance(data["restock_level"], int) and data["restock_level"] >= 1:
                 self.restock_level = data["restock_level"]
             else:
                 raise DataValidationError(
-                    "Invalid type for integer [restock_level]: "
+                    "Invalid type or value for integer [restock_level]: "
                     + str(type(data["restock_level"]))
                 )
         except AttributeError as error:
