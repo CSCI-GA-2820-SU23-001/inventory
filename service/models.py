@@ -165,7 +165,14 @@ class Inventory(db.Model):
             if self.product_id <= 0:
                 raise DataValidationError("data[product_id] is <= 0")
             self.condition = getattr(Condition, data["condition"])
-            self.can_update = getattr(UpdateStatusType, data["can_update"])
+            try:
+                # We already have a function in utilities.py that checks the condition enum type
+                # Check the can_update enum; if it's invalid, throw an error
+                self.can_update = getattr(UpdateStatusType, data["can_update"])
+            except AttributeError:
+                raise DataValidationError(
+                    "Invalid can_update attribute type: %s", data["can_update"]
+                )
             if isinstance(data["quantity"], int) and data["quantity"] >= 1:
                 self.quantity = data["quantity"]
             else:
