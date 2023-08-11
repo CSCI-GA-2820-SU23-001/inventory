@@ -46,7 +46,7 @@ def step_impl(context):
     # load the database with new inventory
     for row in context.table:
         payload = {
-            "product_id": row["product_id"],
+            "product_id": int(row["product_id"]),
             "condition": row["condition"],
             "quantity": int(row["quantity"]),
             "restock_level": int(row["restock_level"]),

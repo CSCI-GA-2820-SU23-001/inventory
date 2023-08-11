@@ -12,10 +12,8 @@ from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
 
 logger = logging.getLogger("flask.app")
-
 # Create the SQLAlchemy object to be initialized later in init_db()
 db = SQLAlchemy()
-
 # global variables for retry (must be int)
 RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 10))
 RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))

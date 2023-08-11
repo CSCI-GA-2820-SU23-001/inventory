@@ -389,9 +389,10 @@ class InventoryCollection(Resource):
         try:
             inventory.deserialize(api.payload)
             inventory.create()
-        except DataValidationError:
+        except DataValidationError as data_valid_error:
             app.logger.error(
-                "routes.py, InventoryCollection::post, a DataValidationError occurred when deserializing"
+                "routes.py, InventoryCollection::post, a DataValidationError occurred when deserializing: %s",
+                str(data_valid_error),
             )
             return "", status.HTTP_400_BAD_REQUEST
         except IntegrityError as error:
