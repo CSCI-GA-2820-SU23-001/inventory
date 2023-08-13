@@ -96,13 +96,13 @@ class Inventory(db.Model):
             db.session.add(self)
             return db.session.commit()
         except (exc.IntegrityError, sqlite3.IntegrityError) as error:
+            db.session.rollback()
             logger.error(
                 "Inventory model create, an error occurred: %s",
                 error.orig.diag.message_detail,
             )
             # error, there already is a user using this bank address or other
             # constraint failed
-            db.session.rollback()
             raise
 
     @retry(
