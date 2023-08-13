@@ -8,9 +8,10 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
     hostname: nyu
-    container_name: project
+    container_name: inventory
     volumes:
       - ..:/app
+      - ~/.inventory/apikey.json:/home/vscode/.inventory/apikey.json
     command: sleep infinity
     environment:
       FLASK_APP: service:app
@@ -25,9 +26,13 @@ services:
 
   postgres:
     image: postgres:alpine
+    restart: unless-stopped
+    # Uncomment ports to access database from your computer (optional)
     # ports:
     #   - 5432:5432
     environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres:/var/lib/postgresql/data
