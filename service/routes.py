@@ -28,9 +28,11 @@ DELETE /inventory/{product_id}/{condition/active - Change an item's update statu
 DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record in the database
 """
 
+import sqlite3
+
 from flask import jsonify
 from flask_restx import Resource, fields
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import exc
 from service.models import Inventory, Condition, UpdateStatusType
 from service.common import status  # HTTP Status Codes
 from service.utilities import check_condition_type
@@ -388,7 +390,7 @@ class InventoryCollection(Resource):
         inventory.deserialize(api.payload)
         try:
             inventory.create()
-        except IntegrityError as error:
+        except (exc.IntegrityError, sqlite3.IntegrityError) as error:
             # It was most likely a 409 conflict, which is what we will return. But log the error message
             # anyway for more info
             app.logger.error(

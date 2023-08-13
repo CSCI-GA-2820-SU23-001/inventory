@@ -6,9 +6,10 @@ import logging
 from enum import Enum
 from datetime import datetime
 import os
+import sqlite3
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
-# from sqlalchemy.exc import IntegrityError
 from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
 
@@ -94,7 +95,7 @@ class Inventory(db.Model):
         try:
             db.session.add(self)
             return db.session.commit()
-        except exc.IntegrityError as error:
+        except (exc.IntegrityError, sqlite3.IntegrityError) as error:
             logger.error(
                 "Inventory model create, an error occurred: %s",
                 error.orig.diag.message_detail,
