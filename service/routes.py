@@ -30,7 +30,7 @@ DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record 
 
 from flask import jsonify
 from flask_restx import Resource, fields
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import exc
 from service.models import Inventory, Condition, UpdateStatusType, DataValidationError
 from service.common import status  # HTTP Status Codes
 from service.utilities import check_condition_type
@@ -389,20 +389,20 @@ class InventoryCollection(Resource):
         try:
             inventory.deserialize(api.payload)
             inventory.create()
+        except exc.IntegrityError as error:
+            # It was most likely a 409 conflict, which is what we will return. But log the error message
+            # anyway for more info
+            app.logger.error(
+                "routes.py, InventoryCollection::post, an error occurred: %s",
+                error,
+            )
+            return "", status.HTTP_409_CONFLICT
         except DataValidationError as data_valid_error:
             app.logger.error(
                 "routes.py, InventoryCollection::post, a DataValidationError occurred when deserializing: %s",
                 str(data_valid_error),
             )
             return "", status.HTTP_400_BAD_REQUEST
-        except IntegrityError as error:
-            # It was most likely a 409 conflict, which is what we will return. But log the error message
-            # anyway for more info
-            app.logger.error(
-                "routes.py, InventoryCollection::post, an error occurred: %s",
-                error.orig.diag.message_detail,
-            )
-            return "", status.HTTP_409_CONFLICT
         # end try/catch block
         app.logger.info("Inventory with new id [%s] created!", inventory.product_id)
         location_url = api.url_for(
