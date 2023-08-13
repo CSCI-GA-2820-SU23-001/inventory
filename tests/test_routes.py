@@ -324,6 +324,60 @@ class TestYourResourceServerCreate(TestResourceServer):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
+    def test_create_with_invalid_can_update_status_enum(self):
+        """Specifying an invalid can_update status"""
+        test_inventory = InventoryFactory(
+            product_id=1,
+            condition=Condition.NEW,
+            quantity=2,
+            restock_level=3,
+            can_update=Condition.USED,
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_with_invalid_numbers(self):
+        """Specify numbers less than 1 for the product ID, quantity, and restock level"""
+        test_inventory = InventoryFactory(product_id=0, condition=Condition.NEW)
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=1, condition=Condition.NEW, quantity=-2
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=1, condition=Condition.NEW, quantity=2, restock_level=-3
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=1, condition=Condition.NEW, quantity=2, restock_level=0
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=1, condition=Condition.NEW, quantity=0, restock_level=3
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=0, condition=Condition.NEW, quantity=2, restock_level=3
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        test_inventory = InventoryFactory(
+            product_id=-1, condition=Condition.NEW, quantity=-2, restock_level=-3
+        )
+        response = self.client.post(BASE_URL, json=test_inventory.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class TestYourResourceServerUpdate(TestResourceServer):
     """Test Cases for Inventory Resource Server Update"""

@@ -13,10 +13,8 @@ from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
 
 logger = logging.getLogger("flask.app")
-
 # Create the SQLAlchemy object to be initialized later in init_db()
 db = SQLAlchemy()
-
 # global variables for retry (must be int)
 RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 10))
 RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
@@ -163,20 +161,29 @@ class Inventory(db.Model):
         """
         try:
             self.product_id = data["product_id"]
+            if self.product_id <= 0:
+                raise DataValidationError("data[product_id] is <= 0")
             self.condition = getattr(Condition, data["condition"])
-            self.can_update = getattr(UpdateStatusType, data["can_update"])
-            if isinstance(data["quantity"], int):
+            try:
+                # We already have a function in utilities.py that checks the condition enum type
+                # Check the can_update enum; if it's invalid, throw an error
+                self.can_update = getattr(UpdateStatusType, data["can_update"])
+            except AttributeError:
+                raise DataValidationError(
+                    "Invalid can_update attribute type: %s", data["can_update"]
+                )
+            if isinstance(data["quantity"], int) and data["quantity"] >= 1:
                 self.quantity = data["quantity"]
             else:
                 raise DataValidationError(
-                    "Invalid type for integer [quantity]: "
+                    "Invalid type or value for integer [quantity]: "
                     + str(type(data["quantity"]))
                 )
-            if isinstance(data["restock_level"], int):
+            if isinstance(data["restock_level"], int) and data["restock_level"] >= 1:
                 self.restock_level = data["restock_level"]
             else:
                 raise DataValidationError(
-                    "Invalid type for integer [restock_level]: "
+                    "Invalid type or value for integer [restock_level]: "
                     + str(type(data["restock_level"]))
                 )
         except AttributeError as error:
