@@ -28,8 +28,6 @@ DELETE /inventory/{product_id}/{condition/active - Change an item's update statu
 DELETE /inventory/{product_id}/{condition} - Deletes an Inventory object record in the database
 """
 
-import sqlite3
-
 from flask import jsonify
 from flask_restx import Resource, fields
 from sqlalchemy import exc
@@ -390,12 +388,12 @@ class InventoryCollection(Resource):
         inventory.deserialize(api.payload)
         try:
             inventory.create()
-        except (exc.IntegrityError, sqlite3.IntegrityError) as error:
+        except exc.IntegrityError as error:
             # It was most likely a 409 conflict, which is what we will return. But log the error message
             # anyway for more info
             app.logger.error(
                 "routes.py, InventoryCollection::post, an error occurred: %s",
-                error.orig.diag.message_detail,
+                error,
             )
             return "", status.HTTP_409_CONFLICT
         # end try/catch block
