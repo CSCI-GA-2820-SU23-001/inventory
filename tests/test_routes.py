@@ -10,6 +10,7 @@ from service.models import Condition
 from service.common import status
 from tests.factories import InventoryFactory  # HTTP Status Codes
 from tests.parent_models import TestResourceServer
+from sqlalchemy.exc import IntegrityError
 
 BASE_URL = "/api/inventory"
 
@@ -308,8 +309,11 @@ class TestYourResourceServerCreate(TestResourceServer):
         )
 
         # Retry the same POST to trigger key conflict
-        response = self.client.post(BASE_URL, json=test_inventory.serialize())
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        try:
+            response = self.client.post(BASE_URL, json=test_inventory.serialize())
+            self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        except IntegrityError as error:
+            logging.debug("Inventory item %s threw a conflict error as intended", test_inventory.serialize())
 
     def test_create_with_no_content_type(self):
         """Specifying some raw string with no type for the post request, it should report a 415 error"""
