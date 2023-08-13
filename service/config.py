@@ -22,6 +22,4 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Secret for session management
 SECRET_KEY = os.getenv("SECRET_KEY", "sup3r-s3cr3t")
-# OLD
-# SECRET_KEY = os.getenv("SECRET_KEY", "s3cr3t-key-shhhh")
 LOGGING_LEVEL = logging.INFO
