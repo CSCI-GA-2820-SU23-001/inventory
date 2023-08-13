@@ -7,7 +7,8 @@ from enum import Enum
 from datetime import datetime
 import os
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import exc
+# from sqlalchemy.exc import IntegrityError
 from requests import HTTPError  # pylint: disable=redefined-builtin
 from retry import retry
 
@@ -90,10 +91,10 @@ class Inventory(db.Model):
         Creates a Inventory to the database
         """
         logger.info("Creating new inventory...")
-        db.session.add(self)
         try:
-            db.session.commit()
-        except IntegrityError as error:
+            db.session.add(self)
+            return db.session.commit()
+        except exc.IntegrityError as error:
             logger.error(
                 "Inventory model create, an error occurred: %s",
                 error.orig.diag.message_detail,
