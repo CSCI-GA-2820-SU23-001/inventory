@@ -312,7 +312,7 @@ class TestYourResourceServerCreate(TestResourceServer):
         try:
             response = self.client.post(BASE_URL, json=test_inventory.serialize())
             self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        except IntegrityError as error:
+        except IntegrityError:
             logging.debug("Inventory item %s threw a conflict error as intended", test_inventory.serialize())
 
     def test_create_with_no_content_type(self):
