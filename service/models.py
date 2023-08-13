@@ -98,7 +98,7 @@ class Inventory(db.Model):
             db.session.rollback()
             logger.error(
                 "Inventory model create, an error occurred: %s",
-                error.orig.diag.message_detail,
+                error,
             )
             # error, there already is a user using this bank address or other
             # constraint failed
