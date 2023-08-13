@@ -6,7 +6,6 @@ import logging
 from enum import Enum
 from datetime import datetime
 import os
-import sqlite3
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
@@ -95,7 +94,7 @@ class Inventory(db.Model):
         try:
             db.session.add(self)
             return db.session.commit()
-        except (exc.IntegrityError, sqlite3.IntegrityError) as error:
+        except exc.IntegrityError as error:
             db.session.rollback()
             logger.error(
                 "Inventory model create, an error occurred: %s",
