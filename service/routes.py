@@ -286,7 +286,17 @@ class InventoryResource(Resource):
                 data["quantity"],
                 data["restock_level"],
             )
-            return "", status.HTTP_400_BAD_REQUEST
+            #return "", status.HTTP_400_BAD_REQUEST
+            if data["quantity"] < 0:
+                abort(
+                    status.HTTP_400_BAD_REQUEST,
+                    f"Quantity is given as {data['quantity']}. It cannot be negative.",
+                )
+            else:
+                abort(
+                    status.HTTP_400_BAD_REQUEST,
+                    f"Restock is given as {data['restock_level']}. It cannot be negative.",
+                )
 
     # ------------------------------------------------------------------
     # DELETE AN INVENTORY OBJECT
@@ -396,7 +406,11 @@ class InventoryCollection(Resource):
                 "routes.py, InventoryCollection::post, an error occurred: %s",
                 error,
             )
-            return "", status.HTTP_409_CONFLICT
+            #return "", status.HTTP_409_CONFLICT
+            abort(
+                    status.HTTP_409_CONFLICT,
+                    f"Inventory with id {inventory.product_id} and condition {api.payload['condition']} already exists",
+                )
         except DataValidationError as data_valid_error:
             app.logger.error(
                 "routes.py, InventoryCollection::post, a DataValidationError occurred when deserializing: %s",

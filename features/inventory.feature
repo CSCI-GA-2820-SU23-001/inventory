@@ -158,3 +158,70 @@ Scenario: Test the enable/disable item updates action
     And I should see "2 OPEN_BOX 70 15" in the results
     And I should see "3 USED 90 110" in the results
     And I should see "4 NEW 100 20 " in the results
+
+Scenario: Test to create inventory which exists in database
+    When I visit the "Home Page"
+    And I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "200"
+    And I set the "restock_level" to "20"
+    And I select "ENABLED" in the "can_update" dropdown
+    And I press the "Create" button
+    Then I should not see the message "Successfully created product ID 1"
+    And I should see the message "Inventory with id 1 and condition NEW already exists"
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW" in the results
+    And I should see "2 OPEN_BOX" in the results
+    And I should see "3 USED" in the results
+    And I should see "4 NEW" in the results
+
+Scenario: Test to update a record with negative quantity value
+    When I visit the "Home Page"
+    And I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "-100"
+    And I set the "restock_level" to "30"
+    And I press the "Update" button
+    Then I should not see the message "Successfully updated product ID 1"
+    And I should see the message "Quantity is given as -100. It cannot be negative."
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW 50 10" in the results
+    And I should not see "1 NEW -100 30" in the results
+    And I should see "2 OPEN_BOX 70 15" in the results
+    And I should see "3 USED 90 110" in the results
+    And I should see "4 NEW 100 20 " in the results
+
+Scenario: Test to update a record with negative restock value
+    When I visit the "Home Page"
+    And I set the "product_id" to "1"
+    And I select "NEW" in the "condition" dropdown
+    And I set the "quantity" to "100"
+    And I set the "restock_level" to "-30"
+    And I press the "Update" button
+    Then I should not see the message "Successfully updated product ID 1"
+    And I should see the message "Restock is given as -30. It cannot be negative."
+    When I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW 50 10" in the results
+    And I should not see "1 NEW 100 -30" in the results
+    And I should see "2 OPEN_BOX 70 15" in the results
+    And I should see "3 USED 90 110" in the results
+    And I should see "4 NEW 100 20 " in the results
+
+Scenario: Retrieve an Inventory that does not exist
+    When I visit the "Home Page"
+    And I press the "Search" all button
+    Then I should see the message "Successfully returned a list of all the items"
+    And I should see "1 NEW" in the results
+    And I should see "2 OPEN_BOX" in the results
+    And I should see "3 USED" in the results
+    And I should see "4 NEW" in the results
+    And I should not see "100 NEW" in the results
+    When I visit the "Home Page"
+    And I set the "product_id" in the retrieve/delete form to "100"
+    And I select "NEW" in the "condition" in the retrieve/delete form dropdown
+    And I press the "Retrieve" button
+    Then I should not see the message "Successfully retrieved info of product ID 100"
+    And I should see the message "Inventory with id '100' and condition 'NEW' was not found."
