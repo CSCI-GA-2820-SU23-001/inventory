@@ -286,7 +286,6 @@ class InventoryResource(Resource):
                 data["quantity"],
                 data["restock_level"],
             )
-            #return "", status.HTTP_400_BAD_REQUEST
             if data["quantity"] < 0:
                 abort(
                     status.HTTP_400_BAD_REQUEST,
@@ -406,7 +405,6 @@ class InventoryCollection(Resource):
                 "routes.py, InventoryCollection::post, an error occurred: %s",
                 error,
             )
-            #return "", status.HTTP_409_CONFLICT
             abort(
                     status.HTTP_409_CONFLICT,
                     f"Inventory with id {inventory.product_id} and condition {api.payload['condition']} already exists",
