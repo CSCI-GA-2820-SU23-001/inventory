@@ -24,7 +24,7 @@ You should be able to reach the service at: `http://localhost:8000`. The port th
 
 ## Documentation
 
-After running honcho start, please click on the "documentation" button on the homepage to bring up the Swagger Docs UI. The Swagger Docs UI explains how to call our API.
+After running honcho start, please click on the "API documentation is here" button on the homepage to bring up the Swagger Docs UI. The Swagger Docs UI explains how to call our API.
 
 ## Contents
 
