@@ -31,8 +31,8 @@ config.py           - configuration parameters
 
 .github/                   - Folder for CI
 └── ISSUE_TEMPLATE         - Templates for Zenhub items
-    ├── bug_report.md
-    ├── user-story.md
+    ├── bug_report.md      - Template for bug reports
+    ├── user-story.md      - Template for user stories
 └── workflows              - Folder for workflows
     ├── bdd.yml            - Steps that auto-run BDD tests
     ├── tdd.yml            - Steps that auto-run TDD tests
