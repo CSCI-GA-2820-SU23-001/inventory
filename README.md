@@ -1,233 +1,20 @@
-# NYU DevOps Project Template
+# Inventory Microservice
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 [![Build Status](https://github.com/CSCI-GA-2820-SU23-001/inventory/actions/workflows/tdd.yml/badge.svg)](https://github.com/CSCI-GA-2820-SU23-001/inventory/actions)
 
-This is a skeleton you can use to start your projects
-
 ## Overview
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+The inventory service keeps track of how many of each product we have in our warehouse. It references a product id and the quantity on hand. This service also tracks restock levels and the condition of the item (i.e., new, open box, used) as an enumeration. Restock levels will help you know when to order more products. Each item has a "last updated on" field that tells the user when this item was added/updated/etc.
 
-## Automatic Setup
+The user also has the ability to enable/disable updates of a given product ID and condition. This can prevent us from having too many copies of an item in our warehouse
 
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
+## HomePage
 
-## Manual Setup
+## Documentation
 
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
-
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
-
-These should be copied using a bash shell as follows:
-
-```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
-```
-
-## Inventory Service APIs
-
-### Inventory Operations
-
-| Endpoint | Methods | Rule
-| -------------------------| ------- | --------------------------
-| create_inventory| POST| ```/inventory```
-| get_inventory | GET | ```/inventory```
-| get_specific_inventory| GET | ```/inventory/<int:product_id>/<condition>```
-| get_inventory_by_criteria| GET | ```/inventory/<_criteria>```
-| update_inventory | PUT| ```/inventory/<int:product_id>/<string:condition>```
-| delete_an_inventory| DELETE  | ```/inventory/<int:product_id>/<string:condition>```
-| list_inventory | GET| ```/inventory```
-
-## APIs Usage
-
-### Create an Inventory
-
-URL : `http://127.0.0.1:8000/inventory`
-
-Method : POST
-
-Auth required : No
-
-Permissions required : No
-
-Create an inventory using a JSON file that includes the product_id, condition, quantity, and restock level.
-
-Example:
-
-Request Body (JSON)
-
-```JSON
-
-{
-  "product_id": 301,
-  "condition": "NEW",
-  "quantity": 10,
-  "restock_level": 5
-}
-
-
-```
-
-Success Response : `HTTP_201_CREATED`
-
-```JSON
-
-{
-  "condition": "NEW",
-  "last_updated_on": "Mon, 17 Jul 2023 17:26:07 GMT",
-  "product_id": 301,
-  "quantity": 10,
-  "restock_level": 5
-}
-```
-
-### Read an Inventory
-
-URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
-
-Method : GET
-
-Auth required : No
-
-Permissions required : No
-
-Read all information of an inventory with given id and condition
-
-Example:
-
-Success Response : `HTTP_200_OK`
-
-```JSON
-
-{
-  "condition": "NEW",
-  "last_updated_on": "Mon, 17 Jul 2023 17:26:07 GMT",
-  "product_id": 301,
-  "quantity": 10,
-  "restock_level": 5
-}
-
-```
-
-Failure Response : `HTTP_404_NOT_FOUND`
-
-```JSON
-
-{
-  "error": "Not Found",
-  "message": "404 Not Found: Inventory with id '301' and condition 'USED' was not found.",
-  "status": 404
-}
-
-```
-
-### Update an Inventory
-
-URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
-
-Method : PUT
-
-Auth required : No
-
-Permissions required : No
-
-Updates an inventory with id provided in the URL according to the updated fields provided in the body
-
-Example:
-
-Request Body (JSON)
-
-```JSON
-
-{
-  "quantity": 25,
-  "restock_level": 5
-}
-
-```
-
-Success Response : `HTTP_200_OK`
-
-```JSON
-
-{
-  "condition": "NEW",
-  "last_updated_on": "Mon, 17 Jul 2023 17:32:01 GMT",
-  "product_id": 301,
-  "quantity": 25,
-  "restock_level": 5
-}
-
-```
-
-Failure Response : `HTTP_404_NOT_FOUND`
-
-```JSON
-
-{
-  "error": "Not Found",
-  "message": "404 Not Found: Inventory not found for product with ID 10 and condition NEW",
-  "status": 404
-}
-
-```
-
-### Delete an Inventory
-
-URL : `http://127.0.0.1:8000/inventory/<int:product_id>/<condition>`
-
-Method : DELETE
-
-Auth required : No
-
-Permissions required : No
-
-Deletes an inventory with id and condition
-
-Example:
-
-Success Response : `204 NO CONTENT`
-
-### List All Inventories
-
-URL : `http://127.0.0.1:8000/inventory`
-
-Method: GET
-
-Auth required : No
-
-Permissions required : No
-
-List all inventory records
-
-Example:
-
-Success Response : `HTTP_200_OK`
-
-```JSON
-
-[
-  {
-    "condition": "NEW",
-    "last_updated_on": "2023-07-17 17:26:07.460762",
-    "product_id": 301,
-    "quantity": 10,
-    "restock_level": 5
-  },
-  {
-    "condition": "NEW",
-    "last_updated_on": "2023-07-17 02:36:08.305311",
-    "product_id": 90,
-    "quantity": 90,
-    "restock_level": 90
-  }
-]
-
-```
+Please click on the "documentation" button on the homepage to bring up the Swagger Docs UI. The Swagger Docs UI explains how to call our API
 
 ## Contents
 
@@ -241,6 +28,14 @@ The project contains the following:
 dot-env-example     - copy to .env to use environment variables
 requirements.txt    - list if Python libraries required by your code
 config.py           - configuration parameters
+
+.github/                   - Folder for CI
+└── ISSUE_TEMPLATE         - Templates for Zenhub items
+    ├── bug_report.md
+    ├── user-story.md
+└── workflows              - Folder for workflows
+    ├── bdd.yml            - Steps that auto-run BDD tests
+    ├── tdd.yml            - Steps that auto-run TDD tests
 
 service/                   - service python package
 ├── __init__.py            - package initializer
